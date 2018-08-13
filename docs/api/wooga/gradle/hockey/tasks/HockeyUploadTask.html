@@ -171,7 +171,7 @@ if (location.href.indexOf('is-external=true') == -1) {
                         <tr class="altColor">
                             <td class="colFirst"><code></code></td>
                             <td class="colLast"><code><a href='../../../../wooga/gradle/hockey/tasks/HockeyUploadTask.html'>HockeyUploadTask</a></code></td>
-                            <td class="colLast"><code><strong><a href="#buildFile(java.lang.Object)">buildFile</a></strong>(java.lang.Object buildFile)</code><br></td>
+                            <td class="colLast"><code><strong><a href="#binary(java.lang.Object)">binary</a></strong>(java.lang.Object binary)</code><br></td>
                         </tr>
                         
                         <tr class="rowColor">
@@ -189,28 +189,34 @@ if (location.href.indexOf('is-external=true') == -1) {
                         <tr class="rowColor">
                             <td class="colFirst"><code></code></td>
                             <td class="colLast"><code>java.io.File</code></td>
-                            <td class="colLast"><code><strong><a href="#getBuildFile()">getBuildFile</a></strong>()</code><br></td>
+                            <td class="colLast"><code><strong><a href="#getBinary()">getBinary</a></strong>()</code><br></td>
                         </tr>
                         
                         <tr class="altColor">
+                            <td class="colFirst"><code></code></td>
+                            <td class="colLast"><code>protected&nbsp;org.gradle.api.file.FileCollection</code></td>
+                            <td class="colLast"><code><strong><a href="#getInputFiles()">getInputFiles</a></strong>()</code><br></td>
+                        </tr>
+                        
+                        <tr class="rowColor">
                             <td class="colFirst"><code></code></td>
                             <td class="colLast"><code>void</code></td>
                             <td class="colLast"><code><strong><a href="#setApiToken(java.lang.Object)">setApiToken</a></strong>(java.lang.Object value)</code><br></td>
                         </tr>
                         
-                        <tr class="rowColor">
+                        <tr class="altColor">
                             <td class="colFirst"><code></code></td>
                             <td class="colLast"><code>void</code></td>
                             <td class="colLast"><code><strong><a href="#setApplicationIdentifier(java.lang.Object)">setApplicationIdentifier</a></strong>(java.lang.Object value)</code><br></td>
                         </tr>
                         
-                        <tr class="altColor">
+                        <tr class="rowColor">
                             <td class="colFirst"><code></code></td>
                             <td class="colLast"><code>void</code></td>
-                            <td class="colLast"><code><strong><a href="#setBuildFile(java.lang.Object)">setBuildFile</a></strong>(java.lang.Object value)</code><br></td>
+                            <td class="colLast"><code><strong><a href="#setBinary(java.lang.Object)">setBinary</a></strong>(java.lang.Object value)</code><br></td>
                         </tr>
                         
-                        <tr class="rowColor">
+                        <tr class="altColor">
                             <td class="colFirst"><code></code></td>
                             <td class="colLast"><code>protected&nbsp;void</code></td>
                             <td class="colLast"><code><strong><a href="#upload()">upload</a></strong>()</code><br></td>
@@ -286,10 +292,10 @@ if (location.href.indexOf('is-external=true') == -1) {
                             </li>
                         </ul>
                     
-                        <a name="buildFile(java.lang.Object)"><!-- --></a>
+                        <a name="binary(java.lang.Object)"><!-- --></a>
                         <ul class="blockListLast">
                             <li class="blockList">
-                                <h4><a href='../../../../wooga/gradle/hockey/tasks/HockeyUploadTask.html'>HockeyUploadTask</a> <strong>buildFile</strong>(java.lang.Object buildFile)</h4>
+                                <h4><a href='../../../../wooga/gradle/hockey/tasks/HockeyUploadTask.html'>HockeyUploadTask</a> <strong>binary</strong>(java.lang.Object binary)</h4>
                                 <p></p>
                             </li>
                         </ul>
@@ -312,11 +318,20 @@ java.lang.String <strong>getApplicationIdentifier</strong>()</h4>
                             </li>
                         </ul>
                     
-                        <a name="getBuildFile()"><!-- --></a>
+                        <a name="getBinary()"><!-- --></a>
                         <ul class="blockListLast">
                             <li class="blockList">
-                                <h4>@org.gradle.api.tasks.Input
-java.io.File <strong>getBuildFile</strong>()</h4>
+                                <h4>java.io.File <strong>getBinary</strong>()</h4>
+                                <p></p>
+                            </li>
+                        </ul>
+                    
+                        <a name="getInputFiles()"><!-- --></a>
+                        <ul class="blockListLast">
+                            <li class="blockList">
+                                <h4>@org.gradle.api.tasks.SkipWhenEmpty
+@org.gradle.api.tasks.InputFiles
+protected&nbsp;org.gradle.api.file.FileCollection <strong>getInputFiles</strong>()</h4>
                                 <p></p>
                             </li>
                         </ul>
@@ -337,10 +352,10 @@ java.io.File <strong>getBuildFile</strong>()</h4>
                             </li>
                         </ul>
                     
-                        <a name="setBuildFile(java.lang.Object)"><!-- --></a>
+                        <a name="setBinary(java.lang.Object)"><!-- --></a>
                         <ul class="blockListLast">
                             <li class="blockList">
-                                <h4>void <strong>setBuildFile</strong>(java.lang.Object value)</h4>
+                                <h4>void <strong>setBinary</strong>(java.lang.Object value)</h4>
                                 <p></p>
                             </li>
                         </ul>
