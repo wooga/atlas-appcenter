@@ -18,25 +18,25 @@ package wooga.gradle.hockey
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.publish.plugins.PublishingPlugin
 import wooga.gradle.hockey.tasks.HockeyUploadTask
 
 class HockeyPlugin implements Plugin<Project> {
 
     static final String TASK_NAME = "publishHockey"
-    static final String TASK_GROUP = "net.wooga.gradle"
-    static final String TASK_DESCRIPTION = "Upload build to HockeyApp"
+    static final String TASK_DESCRIPTION = "Upload binary to HockeyApp."
 
     @Override
     void apply(Project project) {
 
+        project.pluginManager.apply(PublishingPlugin.class)
+
         def tasks = project.tasks
 
-        def publishHockey = tasks.create(name: TASK_NAME, type: HockeyUploadTask, group: TASK_GROUP)
+        def publishHockey = tasks.create(name: TASK_NAME, type: HockeyUploadTask, group: PublishingPlugin.PUBLISH_TASK_GROUP)
         publishHockey.description = TASK_DESCRIPTION
 
-        project.afterEvaluate {
-//            tasks.getByName("publish").dependsOn publishHockey
-        }
+        // TODO: add publish depends on publishHockey
 
 //        project.pluginManager.apply(BasePlugin.class)
 //        project.pluginManager.apply(UnityPlugin.class)

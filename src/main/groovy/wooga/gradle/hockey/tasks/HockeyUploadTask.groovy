@@ -16,8 +16,11 @@
 
 package wooga.gradle.hockey.tasks
 
+import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.ConventionTask
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 
 import java.util.concurrent.Callable
@@ -56,23 +59,33 @@ class HockeyUploadTask extends ConventionTask {
         this
     }
 
-    private Object buildFile
+    private Object binary
 
-    @Input
-    File getBuildFile() {
-        if(!buildFile) {
-            return null
+    @SkipWhenEmpty
+    @InputFiles
+    protected FileCollection getInputFiles()
+    {
+        if(!binary) {
+            return project.files()
         }
-
-        project.file(buildFile)
+        return project.files(binary)
     }
 
-    void setBuildFile(Object value) {
-        buildFile = value
+    File getBinary() {
+
+        def files = getInputFiles()
+        if (files.size() > 0) {
+            return files.getSingleFile()
+        }
+        return null
     }
 
-    HockeyUploadTask buildFile(Object buildFile) {
-        setBuildFile(buildFile)
+    void setBinary(Object value) {
+        binary = value
+    }
+
+    HockeyUploadTask binary(Object binary) {
+        setBinary(binary)
         this
     }
 
@@ -84,7 +97,7 @@ class HockeyUploadTask extends ConventionTask {
             // TODO: make status and notify configurable, add changelog support
             args "-F", "status=2"
             args "-F", "notify=2"
-            args "-F", "ipa=@" + getBuildFile()
+            args "-F", "ipa=@" + getBinary()
             args "-H", "X-HockeyAppToken: " + getApiToken()
             args "https://rink.hockeyapp.net/api/2/apps/" + getApplicationIdentifier() + "/app_versions/upload"
             args "-v", "-f"
