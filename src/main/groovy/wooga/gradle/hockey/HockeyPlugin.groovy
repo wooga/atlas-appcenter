@@ -36,7 +36,8 @@ class HockeyPlugin implements Plugin<Project> {
         def publishHockey = tasks.create(name: TASK_NAME, type: HockeyUploadTask, group: PublishingPlugin.PUBLISH_TASK_GROUP)
         publishHockey.description = TASK_DESCRIPTION
 
-        // TODO: add publish depends on publishHockey
+        def lifecyclePublishTask = tasks.getByName(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME)
+        lifecyclePublishTask.dependsOn(publishHockey)
 
 //        project.pluginManager.apply(BasePlugin.class)
 //        project.pluginManager.apply(UnityPlugin.class)
