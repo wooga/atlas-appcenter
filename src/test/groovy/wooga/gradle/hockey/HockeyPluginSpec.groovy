@@ -18,82 +18,44 @@ package wooga.gradle.hockey
 
 import nebula.test.ProjectSpec
 import org.gradle.api.DefaultTask
+import wooga.gradle.hockey.tasks.HockeyUploadTask
 import spock.lang.Unroll
 
 class HockeyPluginSpec extends ProjectSpec {
-//    public static final String PLUGIN_NAME = 'net.wooga.build-unity'
-//
-//    def 'Creates the [unity] extension'() {
-//        given:
-//        assert !project.plugins.hasPlugin(PLUGIN_NAME)
-//        assert !project.extensions.findByName(UnityBuildPlugin.EXTENSION_NAME)
-//
-//        when:
-//        project.plugins.apply(PLUGIN_NAME)
-//
-//        then:
-//        def extension = project.extensions.findByName(UnityBuildPlugin.EXTENSION_NAME)
-//        extension instanceof DefaultUnityBuildPluginExtension
-//    }
-//
-//    @Unroll("creates the task #taskName")
-//    def 'Creates needed tasks'(String taskName, Class taskType) {
-//        given:
-//        assert !project.plugins.hasPlugin(PLUGIN_NAME)
-//        assert !project.tasks.findByName(taskName)
-//
-//        when:
-//        project.plugins.apply(PLUGIN_NAME)
-//        def task
-//        project.afterEvaluate {
-//            task = project.tasks.findByName(taskName)
-//        }
-//
-//        then:
-//        project.evaluate()
-//        taskType.isInstance(task)
-//
-//        where:
-//        taskName                              | taskType
-//        UnityBuildPlugin.EXPORT_ALL_TASK_NAME | DefaultTask
-//        "exportIOSCi"                         | UnityBuildPlayerTask
-//        "exportAndroidCi"                     | UnityBuildPlayerTask
-//        "exportWebGLCi"                       | UnityBuildPlayerTask
-//        "exportIOSStaging"                    | UnityBuildPlayerTask
-//        "exportAndroidStaging"                | UnityBuildPlayerTask
-//        "exportWebGLStaging"                  | UnityBuildPlayerTask
-//        "exportIOSProduction"                 | UnityBuildPlayerTask
-//        "exportAndroidProduction"             | UnityBuildPlayerTask
-//        "exportWebGLProduction"               | UnityBuildPlayerTask
-//        "exportCi"                            | DefaultTask
-//        "exportStaging"                       | DefaultTask
-//        "exportProduction"                    | DefaultTask
-//        "exportIOS"                           | DefaultTask
-//        "exportAndroid"                       | DefaultTask
-//        "exportWebGL"                         | DefaultTask
-//        "publish"                             | DefaultTask
-//        "publishAndroidCi"                    | DefaultTask
-//        "assemble"                            | DefaultTask
-//        "assembleAndroidCi"                   | DefaultTask
-//        "build"                               | DefaultTask
-//        "buildAndroidCi"                      | DefaultTask
-//        "check"                               | DefaultTask
-//        "checkAndroidCi"                      | DefaultTask
-//    }
-//
-//    @Unroll
-//    def 'adds pluginToAdd #pluginToAdd'(String pluginToAdd) {
-//        given:
-//        assert !project.plugins.hasPlugin(PLUGIN_NAME)
-//        assert !project.plugins.hasPlugin(pluginToAdd)
-//
-//        when:
-//        project.plugins.apply(PLUGIN_NAME)
-//
-//        then:
-//        project.plugins.hasPlugin(pluginToAdd)
-//
-//        where:
-//        pluginToAdd << ['base', 'net.wooga.unity']
-//    }
+    public static final String PLUGIN_NAME = 'net.wooga.hockey'
+
+    @Unroll("creates the task #taskName")
+    def 'creates task #taskName of type #taskType'(String taskName, Class taskType) {
+        given:
+        assert !project.plugins.hasPlugin(PLUGIN_NAME)
+        assert !project.tasks.findByName(taskName)
+
+        when:
+        project.plugins.apply(PLUGIN_NAME)
+        def task
+        project.afterEvaluate {
+            task = project.tasks.findByName(taskName)
+        }
+
+        then:
+        project.evaluate()
+        taskType.isInstance(task)
+
+        where:
+        taskName           | taskType
+        "publishHockey"    | HockeyUploadTask
+        "publish"          | DefaultTask
+    }
+
+    @Unroll
+    def 'applies plugin'() {
+        given:
+        assert !project.plugins.hasPlugin(PLUGIN_NAME)
+
+        when:
+        project.plugins.apply(PLUGIN_NAME)
+
+        then:
+        project.plugins.hasPlugin(PLUGIN_NAME)
+    }
 }
