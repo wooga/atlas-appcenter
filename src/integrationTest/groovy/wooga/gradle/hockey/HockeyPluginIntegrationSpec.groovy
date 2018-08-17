@@ -18,8 +18,42 @@ package wooga.gradle.hockey
 
 class HockeyPluginIntegrationSpec extends IntegrationSpec{
 
-    def "Dummy Test" () {
+    // HockeyApp used for testing: https://rink.hockeyapp.net/manage/apps/814327
+    static String apiToken              = System.env["ATLAS_HOCKEY_INTEGRATION_API_TOKEN"]
+    static String applicationIdentifier = System.env["ATLAS_HOCKEY_INTEGRATION_APPLICATION_IDENTIFIER"]
+
+    def setup() {
+        buildFile << """
+            ${applyPlugin(HockeyPlugin)}
+            publishHockey {
+                apiToken = "$apiToken"
+                applicationIdentifier = "$applicationIdentifier"
+            }
+        """.stripIndent()
+    }
+
+    def "uploads dummy ipa to HockeyApp successfully"() {
+        given: "a dummy ipa binary to upload"
+
+        def testFile = getClass().getClassLoader().getResource("test.ipa").path
+        buildFile << """
+            publishHockey.binary = "$testFile"
+        """.stripIndent()
+
         expect:
-        true
+        runTasksSuccessfully("publishHockey")
+    }
+
+    def "uploading invalid ipa to HockeyApp fails"() {
+        given: "a generated invalid file"
+
+        def emptyFile = createFile("test.ipa").path
+
+        buildFile << """
+            publishHockey.binary = "$emptyFile"
+        """.stripIndent()
+
+        expect:
+        runTasksWithFailure("publishHockey")
     }
 }
