@@ -16,7 +16,7 @@ This plugin is work in progress.
 **build.gradle**
 ```groovy
 plugins {
-    id 'net.wooga.build-unity' version '0.1.0'
+    id 'net.wooga.hockey' version '0.1.0'
 }
 ```
 
