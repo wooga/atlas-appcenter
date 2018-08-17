@@ -18,11 +18,24 @@ package wooga.gradle.hockey
 
 import nebula.test.ProjectSpec
 import org.gradle.api.DefaultTask
+import org.gradle.api.publish.plugins.PublishingPlugin
 import wooga.gradle.hockey.tasks.HockeyUploadTask
 import spock.lang.Unroll
 
 class HockeyPluginSpec extends ProjectSpec {
     public static final String PLUGIN_NAME = 'net.wooga.hockey'
+    public static final String TASK_NAME = 'publishHockey'
+
+    def 'applies plugin'() {
+        given:
+        assert !project.plugins.hasPlugin(PLUGIN_NAME)
+
+        when:
+        project.plugins.apply(PLUGIN_NAME)
+
+        then:
+        project.plugins.hasPlugin(PLUGIN_NAME)
+    }
 
     @Unroll("creates the task #taskName")
     def 'creates task #taskName of type #taskType'(String taskName, Class taskType) {
@@ -42,20 +55,25 @@ class HockeyPluginSpec extends ProjectSpec {
         taskType.isInstance(task)
 
         where:
-        taskName           | taskType
-        "publishHockey"    | HockeyUploadTask
-        "publish"          | DefaultTask
+        taskName                                         | taskType
+        PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME     | DefaultTask
+        TASK_NAME                                        | HockeyUploadTask
     }
 
-    @Unroll
-    def 'applies plugin'() {
+    def 'publish task depends on publishHockey'() {
         given:
         assert !project.plugins.hasPlugin(PLUGIN_NAME)
 
         when:
         project.plugins.apply(PLUGIN_NAME)
+        def publishTask
+        project.afterEvaluate {
+            publishTask = project.tasks.findByName(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME)
+        }
 
         then:
-        project.plugins.hasPlugin(PLUGIN_NAME)
+        project.evaluate()
+        def publishHockey = project.tasks.findByName(TASK_NAME)
+        publishTask.getDependsOn().contains(publishHockey)
     }
 }
