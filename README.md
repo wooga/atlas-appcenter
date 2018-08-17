@@ -1,13 +1,13 @@
-atlas-build-unity
+atlas-hockey
 =================
 
 [![Gradle Plugin ID](https://img.shields.io/badge/gradle-net.wooga.build--unity-brightgreen.svg?style=flat-square)](https://plugins.gradle.org/plugin/net.wooga.build-unity)
-[![Build Status](https://wooga-shields.herokuapp.com/jenkins/s/https/atlas-jenkins.wooga.com/job/atlas-plugins/job/atlas-build-unity/job/master.svg?style=flat-square)]()
-[![Build Status](https://img.shields.io/travis/wooga/atlas-build-unity/master.svg?style=flat-square)](https://travis-ci.org/wooga/atlas-build-unity)
-[![Coveralls Status](https://img.shields.io/coveralls/wooga/atlas-build-unity/master.svg?style=flat-square)](https://coveralls.io/github/wooga/atlas-build-unity?branch=master)
-[![Apache 2.0](https://img.shields.io/badge/license-Apache%202-blue.svg?style=flat-square)](https://raw.githubusercontent.com/wooga/atlas-build-unity/master/LICENSE)
-[![GitHub tag](https://img.shields.io/github/tag/wooga/atlas-build-unity.svg?style=flat-square)]()
-[![GitHub release](https://img.shields.io/github/release/wooga/atlas-build-unity.svg?style=flat-square)]()
+[![Build Status](https://wooga-shields.herokuapp.com/jenkins/s/https/atlas-jenkins.wooga.com/job/atlas-plugins/job/atlas-hockey/job/master.svg?style=flat-square)]()
+[![Build Status](https://img.shields.io/travis/wooga/atlas-hockey/master.svg?style=flat-square)](https://travis-ci.org/wooga/atlas-hockey)
+[![Coveralls Status](https://img.shields.io/coveralls/wooga/atlas-hockey/master.svg?style=flat-square)](https://coveralls.io/github/wooga/atlas-hockey?branch=master)
+[![Apache 2.0](https://img.shields.io/badge/license-Apache%202-blue.svg?style=flat-square)](https://raw.githubusercontent.com/wooga/atlas-hockey/master/LICENSE)
+[![GitHub tag](https://img.shields.io/github/tag/wooga/atlas-hockey.svg?style=flat-square)]()
+[![GitHub release](https://img.shields.io/github/release/wooga/atlas-hockey.svg?style=flat-square)]()
 
 This plugin is work in progress.
 
