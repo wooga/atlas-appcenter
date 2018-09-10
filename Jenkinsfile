@@ -1,62 +1,14 @@
 #!groovy
-@Library('github.com/wooga/atlas-jenkins-pipeline@0.0.3') _
+@Library('github.com/wooga/atlas-jenkins-pipeline@1.x') _
 
-pipeline {
-    agent none
+withCredentials([string(credentialsId: 'atlas_hockey_integration_api_token', variable: 'hockeyToken'),
+                 string(credentialsId: 'atlas_hockey_integration_application_identifier', variable: 'hockeyAppId'),
+                 string(credentialsId: 'atlas_paket_coveralls_token', variable: 'coveralls_token')]) {
 
-    stages {
-        stage('Preparation') {
-            agent any
+    def testEnvironment = [
+                            "ATLAS_HOCKEY_INTEGRATION_API_TOKEN=${hockeyToken}",
+                            "ATLAS_HOCKEY_INTEGRATION_APPLICATION_IDENTIFIER=${hockeyAppId}"
+                          ]
 
-            steps {
-                sendSlackNotification "STARTED", true
-            }
-        }
-
-        stage('check') {
-            parallel {
-                stage('macOS') {
-                    agent {
-                        label 'osx&&atlas&&secondary'
-                    }
-
-                    environment {
-                        ATLAS_HOCKEY_INTEGRATION_API_TOKEN                  = credentials('atlas_hockey_integration_api_token')
-                        ATLAS_HOCKEY_INTEGRATION_APPLICATION_IDENTIFIER     = credentials('atlas_hockey_integration_application_identifier')
-                        COVERALLS_REPO_TOKEN                                = credentials('atlas_hockey_coveralls_token')
-                        TRAVIS_JOB_NUMBER                                   = "${BUILD_NUMBER}.MACOS"
-                    }
-
-                    steps {
-                        gradleWrapper "check"
-                    }
-
-                    post {
-                        success {
-                            gradleWrapper "jacocoTestReport coveralls"
-                            publishHTML([
-                                allowMissing: true,
-                                alwaysLinkToLastBuild: true,
-                                keepAll: true,
-                                reportDir: 'build/reports/jacoco/test/html',
-                                reportFiles: 'index.html',
-                                reportName: 'Coverage',
-                                reportTitles: ''
-                            ])
-                        }
-
-                        always {
-                            junit allowEmptyResults: true, testResults: 'build/test-results/**/*.xml'
-                        }
-                    }
-                }
-            }
-
-            post {
-                always {
-                    sendSlackNotification currentBuild.result, true
-                }
-            }
-        }
-    }
+    buildGradlePlugin plaforms: ['osx'], coverallsToken: coveralls_token, testEnvironment: testEnvironment
 }
