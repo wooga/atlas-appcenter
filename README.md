@@ -26,6 +26,27 @@ Development
 
 [Code of Conduct](docs/Code-of-conduct.md)
 
+Gradle and Java Compatibility
+=============================
+
+Built with Oracle JDK7
+Tested with Oracle JDK8
+
+| Gradle Version  | Works  |
+| :-------------: | :----: |
+| 4.0             | ![yes] |
+| 4.1             | ![yes] |
+| 4.2             | ![yes] |
+| 4.3             | ![yes] |
+| 4.4             | ![yes] |
+| 4.5             | ![yes] |
+| 4.6             | ![yes] |
+| 4.6             | ![yes] |
+| 4.7             | ![yes] |
+| 4.8             | ![yes] |
+| 4.9             | ![yes] |
+| 4.10            | ![yes] |
+
 LICENSE
 =======
 
