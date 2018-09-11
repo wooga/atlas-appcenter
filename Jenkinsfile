@@ -3,7 +3,7 @@
 
 withCredentials([string(credentialsId: 'atlas_hockey_integration_api_token', variable: 'hockeyToken'),
                  string(credentialsId: 'atlas_hockey_integration_application_identifier', variable: 'hockeyAppId'),
-                 string(credentialsId: 'atlas_paket_coveralls_token', variable: 'coveralls_token')]) {
+                 string(credentialsId: 'atlas_hockey_coveralls_token', variable: 'coveralls_token')]) {
 
     def testEnvironment = [
                             "ATLAS_HOCKEY_INTEGRATION_API_TOKEN=${hockeyToken}",
