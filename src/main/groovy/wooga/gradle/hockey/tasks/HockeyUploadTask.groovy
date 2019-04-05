@@ -16,12 +16,20 @@
 
 package wooga.gradle.hockey.tasks
 
+import groovy.json.JsonOutput
+import org.apache.http.HttpEntity
+import org.apache.http.HttpResponse
+import org.apache.http.client.HttpClient
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.entity.mime.MultipartEntityBuilder
+import org.apache.http.entity.mime.content.FileBody
+import org.apache.http.impl.client.HttpClientBuilder
+import org.gradle.api.GradleException
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.ConventionTask
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.SkipWhenEmpty
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
+import wooga.gradle.hockey.api.AppVersion
+import wooga.gradle.hockey.api.internal.DefaultAppVersion
 
 import java.util.concurrent.Callable
 
@@ -59,13 +67,27 @@ class HockeyUploadTask extends ConventionTask {
         this
     }
 
+    @OutputFiles
+    protected FileCollection getOutputFiles() {
+        return project.files(getUploadVersionMetaData())
+    }
+
+    File getUploadVersionMetaData() {
+        new File(temporaryDir, "${getApplicationIdentifier()}.json")
+    }
+
+    private DefaultAppVersion appVersion
+
+    AppVersion getAppVersion() {
+        appVersion
+    }
+
     private Object binary
 
     @SkipWhenEmpty
     @InputFiles
-    protected FileCollection getInputFiles()
-    {
-        if(!binary) {
+    protected FileCollection getInputFiles() {
+        if (!binary) {
             return project.files()
         }
         return project.files(binary)
@@ -91,17 +113,33 @@ class HockeyUploadTask extends ConventionTask {
 
     @TaskAction
     protected void upload() {
-        project.exec {
-            executable "curl"
+        HttpClient client = HttpClientBuilder.create().build()
+        HttpPost post = new HttpPost("https://rink.hockeyapp.net/api/2/apps/${getApplicationIdentifier()}/app_versions/upload")
 
-            // TODO: make status and notify configurable, add changelog support
-            args "-F", "status=2"
-            args "-F", "notify=2"
-            args "-F", "ipa=@" + getBinary()
-            args "-H", "X-HockeyAppToken: " + getApiToken()
-            args "https://rink.hockeyapp.net/api/2/apps/" + getApplicationIdentifier() + "/app_versions/upload"
-            args "-v", "-f"
+        post.setHeader("X-HockeyAppToken", getApiToken())
+
+        FileBody binary = new FileBody(getBinary())
+
+        // TODO: make status and notify configurable, add changelog support
+        HttpEntity content = MultipartEntityBuilder.create()
+                .addPart("ipa", binary)
+                .addTextBody("status", "2")
+                .addTextBody("notify", "2")
+                .build()
+
+        post.setEntity(content)
+        HttpResponse response = client.execute(post)
+
+        if(response.statusLine.statusCode != 201) {
+            throw new GradleException("unable to upload to hockey")
         }
+
+        getUploadVersionMetaData() << JsonOutput.prettyPrint(response.entity.content.text)
+
+        appVersion = new DefaultAppVersion(getUploadVersionMetaData())
+        logger.info("Created new Version ${appVersion.version}")
+        logger.info("visit ${appVersion.publicUrl}")
+        logger.info("build: ${appVersion.buildUrl}")
     }
 
     private static String convertToString(Object value) {

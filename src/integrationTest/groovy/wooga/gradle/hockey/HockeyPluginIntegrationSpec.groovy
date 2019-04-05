@@ -44,6 +44,53 @@ class HockeyPluginIntegrationSpec extends IntegrationSpec{
         runTasksSuccessfully("publishHockey")
     }
 
+    def "writes json file with uploaded version meta data"() {
+        given: "a dummy ipa binary to upload"
+
+        def testFile = getClass().getClassLoader().getResource("test.ipa").path
+        buildFile << """
+            publishHockey.binary = "$testFile"
+        """.stripIndent()
+
+        and: "a future version meta file"
+        def versionMeta = new File(projectDir,"build/tmp/publishHockey/${applicationIdentifier}.json")
+        assert !versionMeta.exists()
+
+        when:
+        runTasksSuccessfully("publishHockey")
+
+        then:
+        versionMeta.exists()
+    }
+
+    def "can access version model after a successfull publish"() {
+        given: "a dummy ipa binary to upload"
+
+        def testFile = getClass().getClassLoader().getResource("test.ipa").path
+        buildFile << """
+            publishHockey.binary = "$testFile"
+        """.stripIndent()
+
+        and: "a task that depends on publishHockey"
+        buildFile << """
+            task workAfterPublish {
+                dependsOn publishHockey
+
+                doLast {
+                    def appVersion = publishHockey.appVersion
+                    println("published app: " + appVersion.title)
+                }
+            }
+        """.stripIndent()
+
+        when:
+        def result = runTasksSuccessfully("workAfterPublish")
+
+        then:
+        result.wasExecuted("publishHockey")
+        outputContains(result, "published app: WoogaUnityUnifiedBuildSystemTest")
+    }
+
     def "uploading invalid ipa to HockeyApp fails"() {
         given: "a generated invalid file"
 
