@@ -16,7 +16,20 @@
 
 package wooga.gradle.hockey
 
+import groovy.json.StringEscapeUtils
+import nebula.test.functional.ExecutionResult
+
+import org.junit.Rule
+import org.junit.contrib.java.lang.system.EnvironmentVariables
+import org.junit.contrib.java.lang.system.ProvideSystemProperty
+
 class IntegrationSpec extends nebula.test.IntegrationSpec{
+
+    @Rule
+    ProvideSystemProperty properties = new ProvideSystemProperty("ignoreDeprecations", "true")
+
+    @Rule
+    public final EnvironmentVariables environmentVariables = new EnvironmentVariables()
 
     def escapedPath(String path) {
         String osName = System.getProperty("os.name").toLowerCase()
@@ -32,5 +45,9 @@ class IntegrationSpec extends nebula.test.IntegrationSpec{
             this.gradleVersion = gradleVersion
             fork = true
         }
+    }
+
+    Boolean outputContains(ExecutionResult result, String message) {
+        result.standardOutput.contains(message) || result.standardError.contains(message)
     }
 }
