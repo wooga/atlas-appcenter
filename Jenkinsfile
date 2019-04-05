@@ -10,5 +10,5 @@ withCredentials([string(credentialsId: 'atlas_hockey_integration_api_token', var
                             "ATLAS_HOCKEY_INTEGRATION_APPLICATION_IDENTIFIER=${hockeyAppId}"
                           ]
 
-    buildGradlePlugin plaforms: ['osx'], coverallsToken: coveralls_token, testEnvironment: testEnvironment
+    buildGradlePlugin plaforms: ['osx', 'windows'], coverallsToken: coveralls_token, testEnvironment: testEnvironment
 }
