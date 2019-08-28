@@ -54,6 +54,6 @@ class HockeyPlugin implements Plugin<Project> {
         })
 
         def lifecyclePublishTask = tasks.getByName(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME)
-        lifecyclePublishTask.dependsOn(publishHockey, publishHockey)
+        lifecyclePublishTask.dependsOn(publishAppCenter, publishHockey)
     }
 }
