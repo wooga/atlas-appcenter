@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2019 Wooga GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,15 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package wooga.gradle.hockey
+package wooga.gradle.appcenter.api
 
-import nebula.test.PluginProjectSpec
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
 
-class HockeyPluginActivationSpec extends PluginProjectSpec {
-    @Override
-    String getPluginName() {
-        return 'net.wooga.hockey'
-    }
+class AppCenterBuildInfo {
+    @Input
+    @Optional
+    String branchName
+    @Input
+    @Optional
+    String commitHash
+    @Input
+    @Optional
+    String commitMessage
 }

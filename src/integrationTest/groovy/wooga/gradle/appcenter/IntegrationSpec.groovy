@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package wooga.gradle.hockey
+package wooga.gradle.appcenter
 
 import groovy.json.StringEscapeUtils
 import nebula.test.functional.ExecutionResult

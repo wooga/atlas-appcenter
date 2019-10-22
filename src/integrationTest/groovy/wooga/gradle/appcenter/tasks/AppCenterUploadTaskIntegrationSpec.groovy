@@ -15,7 +15,7 @@
  *
  */
 
-package wooga.gradle.hockey.tasks
+package wooga.gradle.appcenter.tasks
 
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
@@ -27,8 +27,8 @@ import org.apache.http.client.methods.HttpDelete
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClientBuilder
-import wooga.gradle.hockey.HockeyPlugin
-import wooga.gradle.hockey.IntegrationSpec
+import wooga.gradle.appcenter.AppCenterPlugin
+import wooga.gradle.appcenter.IntegrationSpec
 
 class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
     static String apiToken              = System.env["ATLAS_APP_CENTER_INTEGRATION_API_TOKEN"]
@@ -38,7 +38,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
     def setup() {
         buildFile << """
             version = "0.1.0"
-            ${applyPlugin(HockeyPlugin)}
+            ${applyPlugin(AppCenterPlugin)}
             publishAppCenter {
                 owner = "$owner"
                 apiToken = "$apiToken"

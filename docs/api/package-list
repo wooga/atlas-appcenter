@@ -1,2 +1,3 @@
-wooga.gradle.hockey
-wooga.gradle.hockey.tasks
+wooga.gradle.appcenter
+wooga.gradle.appcenter.api
+wooga.gradle.appcenter.tasks

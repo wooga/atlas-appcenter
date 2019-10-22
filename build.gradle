@@ -19,24 +19,24 @@ plugins {
 }
 
 group 'net.wooga.gradle'
-description = 'Hockey app upload plugin.'
+description = 'AppCenter upload plugin.'
 
 pluginBundle {
-    website = 'https://wooga.github.io/atlas-hockey/'
-    vcsUrl = 'https://github.com/wooga/atlas-hockey'
-    tags = ['HockeyApp']
+    website = 'https://wooga.github.io/atlas-appcenter/'
+    vcsUrl = 'https://github.com/wooga/atlas-appcenter'
+    tags = ['AppCenter']
 
     plugins {
         unity {
-            id = 'net.wooga.hockey'
-            displayName = 'Gradle HockeyApp plugin'
-            description = 'This plugin provides tasks for uploading a build to hockey'
+            id = 'net.wooga.appcenter'
+            displayName = 'Gradle AppCenter plugin'
+            description = 'This plugin provides tasks for uploading a build to AppCenter'
         }
     }
 }
 
 github {
-    repositoryName = "wooga/atlas-hockey"
+    repositoryName = "wooga/atlas-appcenter"
 }
 
 dependencies {

@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package wooga.gradle.hockey
+package wooga.gradle.appcenter
 
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.plugins.PublishingPlugin
-import wooga.gradle.hockey.tasks.AppCenterUploadTask
-import wooga.gradle.hockey.tasks.HockeyUploadTask
+import wooga.gradle.appcenter.tasks.AppCenterUploadTask
 
-class HockeyPlugin implements Plugin<Project> {
-
-    static final String PUBLISH_HOCKEY_TASK_NAME = "publishHockey"
-    static final String PUBLISH_HOCKEY_TASK_DESCRIPTION = "Upload binary to HockeyApp."
+class AppCenterPlugin implements Plugin<Project> {
 
     static final String PUBLISH_APP_CENTER_TASK_NAME = "publishAppCenter"
     static final String PUBLISH_APP_CENTER_TASK_DESCRIPTION = "Upload binary to AppCenter."
@@ -37,9 +33,6 @@ class HockeyPlugin implements Plugin<Project> {
         project.pluginManager.apply(PublishingPlugin.class)
 
         def tasks = project.tasks
-
-        def publishHockey = tasks.create(name: PUBLISH_HOCKEY_TASK_NAME, type: HockeyUploadTask, group: PublishingPlugin.PUBLISH_TASK_GROUP)
-        publishHockey.description = PUBLISH_HOCKEY_TASK_DESCRIPTION
 
         def publishAppCenter = tasks.create(name: PUBLISH_APP_CENTER_TASK_NAME, type: AppCenterUploadTask, group: PublishingPlugin.PUBLISH_TASK_GROUP)
         publishAppCenter.description = PUBLISH_APP_CENTER_TASK_DESCRIPTION
@@ -54,6 +47,6 @@ class HockeyPlugin implements Plugin<Project> {
         })
 
         def lifecyclePublishTask = tasks.getByName(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME)
-        lifecyclePublishTask.dependsOn(publishAppCenter, publishHockey)
+        lifecyclePublishTask.dependsOn(publishAppCenter)
     }
 }

@@ -15,7 +15,7 @@
  *
  */
 
-package wooga.gradle.hockey.tasks
+package wooga.gradle.appcenter.tasks
 
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
@@ -35,7 +35,7 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.ConventionTask
 import org.gradle.api.tasks.*
 import org.gradle.internal.impldep.com.google.gson.JsonObject
-import wooga.gradle.hockey.api.AppCenterBuildInfo
+import wooga.gradle.appcenter.api.AppCenterBuildInfo
 import static org.gradle.util.ConfigureUtil.configureUsing
 
 import java.util.concurrent.Callable
@@ -53,7 +53,7 @@ class AppCenterUploadTask extends ConventionTask {
         apiToken = value
     }
 
-    HockeyUploadTask apiToken(Object apiToken) {
+    AppCenterUploadTask apiToken(Object apiToken) {
         setApiToken(apiToken)
         this
     }
@@ -122,7 +122,7 @@ class AppCenterUploadTask extends ConventionTask {
         applicationIdentifier = value
     }
 
-    HockeyUploadTask applicationIdentifier(Object applicationIdentifier) {
+    AppCenterUploadTask applicationIdentifier(Object applicationIdentifier) {
         setApplicationIdentifier(applicationIdentifier)
         this
     }
@@ -189,7 +189,7 @@ class AppCenterUploadTask extends ConventionTask {
         binary = value
     }
 
-    HockeyUploadTask binary(Object binary) {
+    AppCenterUploadTask binary(Object binary) {
         setBinary(binary)
         this
     }

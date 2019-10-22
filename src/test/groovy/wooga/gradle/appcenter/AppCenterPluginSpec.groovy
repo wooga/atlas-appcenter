@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package wooga.gradle.hockey
+package wooga.gradle.appcenter
 
 import nebula.test.ProjectSpec
 import org.gradle.api.DefaultTask
 import org.gradle.api.publish.plugins.PublishingPlugin
-import wooga.gradle.hockey.tasks.AppCenterUploadTask
-import wooga.gradle.hockey.tasks.HockeyUploadTask
+import wooga.gradle.appcenter.tasks.AppCenterUploadTask
 import spock.lang.Unroll
 
-class HockeyPluginSpec extends ProjectSpec {
-    public static final String PLUGIN_NAME = 'net.wooga.hockey'
+class AppCenterPluginSpec extends ProjectSpec {
+    public static final String PLUGIN_NAME = 'net.wooga.appcenter'
 
     def 'applies plugin'() {
         given:
@@ -57,7 +56,6 @@ class HockeyPluginSpec extends ProjectSpec {
         where:
         taskName                                     | taskType
         PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME | DefaultTask
-        "publishHockey"                              | HockeyUploadTask
         "publishAppCenter"                           | AppCenterUploadTask
     }
 
@@ -75,12 +73,11 @@ class HockeyPluginSpec extends ProjectSpec {
 
         then:
         project.evaluate()
-        def publishHockey = project.tasks.findByName(taskName)
-        publishTask.getDependsOn().contains(publishHockey)
+        def publish = project.tasks.findByName(taskName)
+        publishTask.getDependsOn().contains(publish)
 
         where:
         taskName           | _
-        "publishHockey"    | _
         "publishAppCenter" | _
     }
 }
