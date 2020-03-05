@@ -127,6 +127,23 @@ class AppCenterUploadTask extends ConventionTask {
         this
     }
 
+    private Object releaseNotes
+
+    @Optional
+    @Input
+    String getReleaseNotes() {
+        convertToString(releaseNotes)
+    }
+
+    void setReleaseNotes(Object value) {
+        releaseNotes = value
+    }
+
+    AppCenterUploadTask releaseNotes(Object releaseNotes) {
+        setReleaseNotes(releaseNotes)
+        this
+    }
+
     private List<Map<String,String>> destinations = new ArrayList<>()
 
     @Input
@@ -267,7 +284,7 @@ class AppCenterUploadTask extends ConventionTask {
         jsonSlurper.parseText(response.entity.content.text) as Map
     }
 
-    private static void distribute(HttpClient client, String owner, String applicationIdentifier, String apiToken, String releaseId, List<Map<String,String>> destinations, AppCenterBuildInfo buildInfo) {
+    private static void distribute(HttpClient client, String owner, String applicationIdentifier, String apiToken, String releaseId, List<Map<String,String>> destinations, AppCenterBuildInfo buildInfo, String releaseNotes) {
         //     curl -X PATCH --header 'Content-Type: application/json'
         //                   --header 'Accept: application/json'
         //                   --header 'X-API-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
@@ -295,7 +312,8 @@ class AppCenterUploadTask extends ConventionTask {
             build["commit_message"] = buildInfo.commitMessage
         }
 
-        def body = ["destinations": destinations, "build": build]
+        def body = ["destinations": destinations, "build": build, "release_notes": releaseNotes]
+
         patch.setEntity(new StringEntity(JsonOutput.toJson(body), ContentType.APPLICATION_JSON))
 
         HttpResponse response = client.execute(patch)
@@ -319,7 +337,7 @@ class AppCenterUploadTask extends ConventionTask {
         String releaseId = resource["release_id"].toString()
         String releaseUrl = resource["release_url"].toString()
 
-        distribute(client, getOwner(), getApplicationIdentifier(), getApiToken(), releaseId, getDestinations(), getBuildInfo())
+        distribute(client, getOwner(), getApplicationIdentifier(), getApiToken(), releaseId, getDestinations(), getBuildInfo(), getReleaseNotes() ?: "")
 
         logger.info("published to AppCenter release: ${releaseId}")
         logger.info("release_url: ${releaseUrl}")

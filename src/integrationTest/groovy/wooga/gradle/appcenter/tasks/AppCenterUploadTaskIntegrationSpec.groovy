@@ -181,6 +181,39 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         buildInfo["commit_message"] == "Fix tests"
     }
 
+    def "can publish release notes"() {
+        given: "publish task with release notes text"
+        buildFile << """
+            publishAppCenter.releaseNotes = "${releaseNotes}"
+        """.stripIndent()
+
+        and: "a dummy ipa binary to upload"
+        def testFile = getClass().getClassLoader().getResource("test.ipa").path
+        buildFile << """
+            publishAppCenter.binary = "$testFile"
+        """.stripIndent()
+
+        and: "a future version meta file"
+        def versionMeta = new File(projectDir,"build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        assert !versionMeta.exists()
+
+        when:
+        runTasksSuccessfully("publishAppCenter")
+
+        then:
+        versionMeta.exists()
+        def jsonSlurper = new JsonSlurper()
+        def releaseMeta = jsonSlurper.parse(versionMeta)
+
+        def releaseId = releaseMeta["release_id"]
+        def release = getRelease(releaseId)
+        release['release_notes'] == releaseNotes
+
+        where:
+        releaseNotes = "publish new version"
+
+    }
+
     void deleteDistributionGroup(String name) {
         HttpClient client = HttpClientBuilder.create().build()
         HttpDelete request = new HttpDelete("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifier}/distribution_groups/${URLEncoder.encode(name,"UTF-8")}")
