@@ -101,9 +101,9 @@ class AppCenterUploadTask extends DefaultTask {
     @Input
     final ListProperty<Map<String, String>> destinations
 
-    @Optional
-    @Internal
-    final ListProperty<Map<String, String>> defaultDestinations
+    void setDestinations(Iterable<String> value) {
+        destinations.set(value.collect {["name": it]})
+    }
 
     void destination(String name) {
         destinations.add(["name": name])
@@ -170,7 +170,6 @@ class AppCenterUploadTask extends DefaultTask {
         applicationIdentifier = project.objects.property(String)
         releaseNotes = project.objects.property(String)
         destinations = project.objects.listProperty(Map)
-        defaultDestinations = project.objects.listProperty(Map)
 
         binary = projectLayout.fileProperty()
         outputDir = projectLayout.directoryProperty()
@@ -292,9 +291,7 @@ class AppCenterUploadTask extends DefaultTask {
         Integer releaseId = releaseId.getOrElse(0)
         File binary = binary.get().asFile
         List<Map<String, String>> destinations = destinations.getOrElse([])
-        if(destinations.empty) {
-            destinations = defaultDestinations.get()
-        }
+
         String releaseNotes = releaseNotes.getOrElse("")
 
         def uploadResource = createUploadResource(client, owner, applicationIdentifier, apiToken, buildVersion, releaseId)

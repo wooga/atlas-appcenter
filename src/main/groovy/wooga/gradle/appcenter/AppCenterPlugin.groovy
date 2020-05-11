@@ -41,8 +41,7 @@ class AppCenterPlugin implements Plugin<Project> {
             @Override
             void execute(AppCenterUploadTask t) {
                 t.buildVersion.set(project.providers.provider({ project.version.toString() }))
-                t.destinations.set([])
-                t.defaultDestinations.set([["name": "Collaborators"]])
+                t.destinations.set([["name": "Collaborators"]])
             }
         })
 
