@@ -27,12 +27,13 @@ import org.apache.http.client.methods.HttpDelete
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClientBuilder
+import spock.lang.Unroll
 import wooga.gradle.appcenter.AppCenterPlugin
 import wooga.gradle.appcenter.IntegrationSpec
 
 class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
-    static String apiToken              = System.env["ATLAS_APP_CENTER_INTEGRATION_API_TOKEN"]
-    static String owner                 = System.env["ATLAS_APP_CENTER_OWNER"]
+    static String apiToken = System.env["ATLAS_APP_CENTER_INTEGRATION_API_TOKEN"]
+    static String owner = System.env["ATLAS_APP_CENTER_OWNER"]
     static String applicationIdentifier = System.env["ATLAS_APP_CENTER_INTEGRATION_APPLICATION_IDENTIFIER"]
 
     def setup() {
@@ -49,6 +50,8 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
 
     def "uploads dummy ipa to AppCenter successfully"() {
         given: "a dummy ipa binary to upload"
+
+        "true".toBoolean()
 
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
@@ -67,7 +70,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir,"build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
         assert !versionMeta.exists()
 
         when:
@@ -85,7 +88,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir,"build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
         assert !versionMeta.exists()
 
         and: "no configured distribution groups"
@@ -96,7 +99,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         then:
         def release = getRelease(versionMeta)
         def destinations = release["destinations"]
-        destinations.any {it["name"] == "Collaborators"}
+        destinations.any { it["name"] == "Collaborators" }
     }
 
     def "can publish to custom distribution groups"() {
@@ -115,7 +118,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir,"build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
         assert !versionMeta.exists()
 
         when:
@@ -124,8 +127,8 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         then:
         def release = getRelease(versionMeta)
         def destinations = release["destinations"]
-        destinations.any {it["name"] == "Test" || it["name"] == "Test2"}
-        !destinations.any {it["name"] == "Collaborators"}
+        destinations.any { it["name"] == "Test" || it["name"] == "Test2" }
+        !destinations.any { it["name"] == "Collaborators" }
     }
 
     def "can publish to custom distribution group in addition to default groups"() {
@@ -145,7 +148,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir,"build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
         assert !versionMeta.exists()
 
         when:
@@ -154,7 +157,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         then:
         def release = getRelease(versionMeta)
         def destinations = release["destinations"]
-        destinations.any {it["name"] == "Test" || it["name"] == "Test2" || it["name"] == "Collaborators"}
+        destinations.any { it["name"] == "Test" || it["name"] == "Test2" || it["name"] == "Collaborators" }
     }
 
     def "fails when distribution group is invalid"() {
@@ -190,7 +193,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir,"build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
         assert !versionMeta.exists()
 
         when:
@@ -223,7 +226,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir,"build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
         assert !versionMeta.exists()
 
         when:
@@ -240,12 +243,83 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
 
         where:
         releaseNotes = "publish new version"
-
     }
+
+    @Unroll()
+    def "can add publish destinations with :#method and type '#type'"() {
+        given: "some configured property"
+        buildFile << "publishAppCenter.${method}(${value})"
+
+        and: "available groups"
+        expectedGroups.each {
+            if (it != "Collaborators") {
+                ensureDistributionGroup(it)
+            }
+        }
+
+        and: "a dummy ipa binary to upload"
+        def testFile = getClass().getClassLoader().getResource("test.ipa").path
+        buildFile << """
+            publishAppCenter.binary = "$testFile"
+        """.stripIndent()
+
+        and: "a future version meta file"
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        assert !versionMeta.exists()
+
+        when:
+        runTasksSuccessfully("publishAppCenter")
+
+        then:
+        def release = getRelease(versionMeta)
+        def destinations = release["destinations"] as List<Map>
+        expectedGroups.every { group ->
+            destinations.find { it["name"] == group }
+        }
+
+        where:
+        property       | method            | rawValue           | type           | expectedGroups
+        "destinations" | "destination"     | ["Test1"]          | "List<String>" | ["Collaborators", "Test1"]
+        "destinations" | "destination"     | "Test1"            | "String"       | ["Collaborators", "Test1"]
+        "destinations" | "destination"     | ["Test1", "Test2"] | "List<String>" | ["Collaborators", "Test1", "Test2"]
+        "destinations" | "destination"     | ["Test1", "Test2"] | "String..."    | ["Collaborators", "Test1", "Test2"]
+        //"destinations" | "destinationId"   | "groupId"            | "String"       | [[name: "Collaborators"], [id: "groupId"]]
+        "destinations" | "setDestinations" | ["Test1", "Test2"] | "List<String>" | ["Test1", "Test2"]
+        value = wrapValueBasedOnType(rawValue, type)
+    }
+
+    def "can add publish destinations with :destinationId"() {
+        given: "a new group"
+        def group = ensureDistributionGroup("TestGroupFromId")
+
+        and: "configuring destination group by id"
+        buildFile << "publishAppCenter.destinationId('${group['id']}')"
+
+        and: "a dummy ipa binary to upload"
+        def testFile = getClass().getClassLoader().getResource("test.ipa").path
+        buildFile << """
+            publishAppCenter.binary = "$testFile"
+        """.stripIndent()
+
+        and: "a future version meta file"
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        assert !versionMeta.exists()
+
+        when:
+        runTasksSuccessfully("publishAppCenter")
+
+        then:
+        def release = getRelease(versionMeta)
+        def destinations = release["destinations"] as List<Map>
+        destinations.any {
+            it["id"] == group["id"] && it["name"] == group["name"]
+        }
+    }
+
 
     void deleteDistributionGroup(String name) {
         HttpClient client = HttpClientBuilder.create().build()
-        HttpDelete request = new HttpDelete("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifier}/distribution_groups/${URLEncoder.encode(name,"UTF-8")}")
+        HttpDelete request = new HttpDelete("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifier}/distribution_groups/${URLEncoder.encode(name, "UTF-8")}")
 
         request.setHeader("Accept", 'application/json')
         request.setHeader("X-API-Token", apiToken)
@@ -257,7 +331,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         }
     }
 
-    void ensureDistributionGroup(String name) {
+    Map<String, String> ensureDistributionGroup(String name) {
         HttpClient client = HttpClientBuilder.create().build()
         HttpPost request = new HttpPost("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifier}/distribution_groups")
 
@@ -271,7 +345,29 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
 
         if (response.statusLine.statusCode != 201 && response.statusLine.statusCode != 409) {
             throw new Exception("Failed to create distribution group")
+        } else if (response.statusLine.statusCode == 409) {
+            return loadDistributionGroup(name)
         }
+
+        def jsonSlurper = new JsonSlurper()
+        jsonSlurper.parseText(response.entity.content.text) as Map
+    }
+
+    Map<String, String> loadDistributionGroup(String name) {
+        HttpClient client = HttpClientBuilder.create().build()
+        HttpGet request = new HttpGet("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifier}/distribution_groups/${name}")
+
+        request.setHeader("Accept", 'application/json')
+        request.setHeader("X-API-Token", apiToken)
+
+        HttpResponse response = client.execute(request)
+
+        if (response.statusLine.statusCode != 200) {
+            throw new Exception("Failed to load distribution group")
+        }
+
+        def jsonSlurper = new JsonSlurper()
+        jsonSlurper.parseText(response.entity.content.text) as Map
     }
 
     Map getRelease(File versionMeta) {

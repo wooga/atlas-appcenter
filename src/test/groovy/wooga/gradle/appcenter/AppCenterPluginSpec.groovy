@@ -19,8 +19,9 @@ package wooga.gradle.appcenter
 import nebula.test.ProjectSpec
 import org.gradle.api.DefaultTask
 import org.gradle.api.publish.plugins.PublishingPlugin
-import wooga.gradle.appcenter.tasks.AppCenterUploadTask
+
 import spock.lang.Unroll
+import wooga.gradle.appcenter.tasks.AppCenterUploadTask
 
 class AppCenterPluginSpec extends ProjectSpec {
     public static final String PLUGIN_NAME = 'net.wooga.appcenter'

@@ -16,9 +16,32 @@ This plugin is work in progress.
 **build.gradle**
 ```groovy
 plugins {
-    id 'net.wooga.appcenter' version '0.1.0'
+    id 'net.wooga.appcenter' version '0.7.0'
 }
 ```
+
+AppCenter extension
+-------------------
+
+The extension allows to set the basic properties for appcenter
+
+```groovy
+appCenter {
+   apiToken = ""
+   owner = ""
+   applicationIdentifier = ""
+   defaultDestinations = ["", ""]
+}
+```
+
+The properties are by default looked up in the gradle properties and/or environment.
+
+| property              | gradle property name              | environment variable                |
+| -------------------- | --------------------------------- | ----------------------------------- |
+| apiToken              | `appCenter.apiToken`              | `APP_CENTER_API_TOKEN`              |
+| owner                 | `appCenter.owner`                 | `APP_CENTER_OWNER`                  |
+| applicationIdentifier | `appCenter.applicationIdentifier` | `APP_CENTER_APPLICATION_IDENTIFIER` |
+| defaultDestinations   | `appCenter.defaultDestinations`   | `APP_CENTER_DEFAULT_DESTINATIONS`   |
 
 
 Development
@@ -32,33 +55,35 @@ Gradle and Java Compatibility
 Built with Oracle JDK7
 Tested with Oracle JDK8
 
-| Gradle Version  | Works    |
-| :-------------: | :------: |
-| 4.0             | `v0.6.0` |
-| 4.1             | `v0.6.0` |
-| 4.2             | `v0.6.0` |
-| 4.3             | `v0.6.0` |
-| 4.4             | ![yes]   |
-| 4.5             | ![yes]   |
-| 4.6             | ![yes]   |
-| 4.6             | ![yes]   |
-| 4.7             | ![yes]   |
-| 4.8             | ![yes]   |
-| 4.9             | ![yes]   |
-| 4.10.2          | ![yes]   |
-| 5.0             | ![yes]   |
-| 5.1             | ![yes]   |
-| 5.2             | ![yes]   |
-| 5.3             | ![yes]   |
-| 5.4             | ![yes]   |
-| 5.5             | ![yes]   |
-| 5.6.4           | ![yes]   |
-| 6.0             | ![yes]   |
-| 6.1             | ![yes]   |
-| 6.2             | ![yes]   |
-| 6.3             | ![yes]   |
-| 6.4             | ![yes]   |
- 
+| Gradle Version  | Works     |
+| :-------------: | :-------: |
+| 4.0             | `v0.6.0`  |
+| 4.1             | `v0.6.0`  |
+| 4.2             | `v0.6.0`  |
+| 4.3             | `v0.6.0`  |
+| 4.4             | ![yes]_*_ |
+| 4.5             | ![yes]_*_ |
+| 4.6             | ![yes]_*_ |
+| 4.6             | ![yes]_*_ |
+| 4.7             | ![yes]_*_ |
+| 4.8             | ![yes]_*_ |
+| 4.9             | ![yes]_*_ |
+| 4.10.2          | ![yes]    |
+| 5.0             | ![yes]    |
+| 5.1             | ![yes]    |
+| 5.2             | ![yes]    |
+| 5.3             | ![yes]    |
+| 5.4             | ![yes]    |
+| 5.5             | ![yes]    |
+| 5.6.4           | ![yes]    |
+| 6.0             | ![yes]    |
+| 6.1             | ![yes]    |
+| 6.2             | ![yes]    |
+| 6.3             | ![yes]    |
+| 6.4             | ![yes]    |
+
+> (*) Setting multiple distribution groups via the extionsion `defaultDestination` or in the publish task `destination` is not supported.
+> Either use the setter `setDefaultDestination`/`setDestination` or invoke `defaultDestination`/`destination` multiple times with a single group
 
 LICENSE
 =======
