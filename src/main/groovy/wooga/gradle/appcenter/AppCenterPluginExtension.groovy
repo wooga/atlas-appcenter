@@ -40,4 +40,8 @@ interface AppCenterPluginExtension {
     void defaultDestination(Iterable<String> destinations)
     void defaultDestination(String... destinations)
     void defaultDestinationId(String id)
+
+    Property<Boolean> getPublishEnabled()
+    Property<Boolean> isPublishEnabled()
+    void setPublishEnabled(final boolean enabled)
 }

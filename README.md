@@ -31,18 +31,19 @@ appCenter {
    owner = ""
    applicationIdentifier = ""
    defaultDestinations = ["", ""]
+   publishEnabled = false
 }
 ```
 
 The properties are by default looked up in the gradle properties and/or environment.
 
 | property              | gradle property name              | environment variable                |
-| -------------------- | --------------------------------- | ----------------------------------- |
+| --------------------- | --------------------------------- | ----------------------------------- |
 | apiToken              | `appCenter.apiToken`              | `APP_CENTER_API_TOKEN`              |
 | owner                 | `appCenter.owner`                 | `APP_CENTER_OWNER`                  |
 | applicationIdentifier | `appCenter.applicationIdentifier` | `APP_CENTER_APPLICATION_IDENTIFIER` |
 | defaultDestinations   | `appCenter.defaultDestinations`   | `APP_CENTER_DEFAULT_DESTINATIONS`   |
-
+| publishEnabled        | `appCenter.publishEnabled`        | `APP_CENTER_PUBLISH_ENABLED`        |
 
 Development
 ===========

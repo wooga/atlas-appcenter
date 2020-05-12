@@ -52,8 +52,15 @@ class AppCenterPlugin implements Plugin<Project> {
             }
         })
 
-        def lifecyclePublishTask = tasks.getByName(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME)
-        lifecyclePublishTask.dependsOn(publishAppCenter)
+        project.afterEvaluate(new Action<Project>() {
+            @Override
+            void execute(Project _) {
+                if(extension.isPublishEnabled().get()) {
+                    def lifecyclePublishTask = tasks.getByName(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME)
+                    lifecyclePublishTask.dependsOn(publishAppCenter)
+                }
+            }
+        })
     }
 
     protected static AppCenterPluginExtension create_and_configure_extension(Project project) {
@@ -85,6 +92,15 @@ class AppCenterPlugin implements Plugin<Project> {
                     ?: System.getenv()[AppCenterConsts.APPLICATION_IDENTIFIER_ENV_VAR]) as String
         }))
 
+        extension.publishEnabled.set(project.provider({
+            String rawValue = (project.properties[AppCenterConsts.PUBLISH_ENABLED_OPTION]
+                    ?: System.getenv()[AppCenterConsts.PUBLISH_ENABLED_ENV_VAR]) as String
+
+            if (rawValue) {
+                return (rawValue == "1" || rawValue.toLowerCase() == "yes" || rawValue.toLowerCase() == "y" || rawValue.toLowerCase() == "true")
+            }
+            AppCenterConsts.defaultPublishEnabled
+        }))
         extension
     }
 }

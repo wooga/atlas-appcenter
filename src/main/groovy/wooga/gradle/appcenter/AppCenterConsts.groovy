@@ -17,6 +17,8 @@
 
 package wooga.gradle.appcenter
 
+import com.sun.org.apache.xpath.internal.operations.Bool
+
 class AppCenterConsts {
     static String API_TOKEN_OPTION = "appCenter.apiToken"
     static String API_TOKEN_ENV_VAR = "APP_CENTER_API_TOKEN"
@@ -30,4 +32,8 @@ class AppCenterConsts {
     static List<Map<String, String>> defaultDestinations = [["name": "Collaborators"]]
     static String DEFAULT_DESTINATIONS_OPTION = "appCenter.defaultDestinations"
     static String DEFAULT_DESTINATIONS_ENV_VAR = "APP_CENTER_DEFAULT_DESTINATIONS"
+
+    static Boolean defaultPublishEnabled = true
+    static String PUBLISH_ENABLED_OPTION = "appCenter.publishEnabled"
+    static String PUBLISH_ENABLED_ENV_VAR = "APP_CENTER_PUBLISH_ENABLED"
 }

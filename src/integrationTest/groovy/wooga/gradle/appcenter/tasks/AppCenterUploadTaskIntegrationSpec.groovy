@@ -50,9 +50,6 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
 
     def "uploads dummy ipa to AppCenter successfully"() {
         given: "a dummy ipa binary to upload"
-
-        "true".toBoolean()
-
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
             publishAppCenter.binary = "$testFile"
