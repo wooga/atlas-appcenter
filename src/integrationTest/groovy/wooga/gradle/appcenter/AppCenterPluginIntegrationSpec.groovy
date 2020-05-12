@@ -100,6 +100,33 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         "defaultDestinations"   | "['group3','group4']" | [["name": "group3"], ["name": "group4"]] | "[group3,group4]" | PropertyLocation.script
         "defaultDestinations"   | null                  | [["name": "Collaborators"]]              | "null"            | PropertyLocation.none
 
+        "publishEnabled"        | true                  | _                                        | true              | PropertyLocation.env
+        "publishEnabled"        | true                  | _                                        | 1                 | PropertyLocation.env
+        "publishEnabled"        | true                  | _                                        | "TRUE"            | PropertyLocation.env
+        "publishEnabled"        | true                  | _                                        | 'y'               | PropertyLocation.env
+        "publishEnabled"        | true                  | _                                        | 'yes'             | PropertyLocation.env
+        "publishEnabled"        | true                  | _                                        | 'YES'             | PropertyLocation.env
+        "publishEnabled"        | true                  | _                                        | false             | PropertyLocation.env
+        "publishEnabled"        | true                  | _                                        | 0                 | PropertyLocation.env
+        "publishEnabled"        | true                  | _                                        | "FALSE"           | PropertyLocation.env
+        "publishEnabled"        | true                  | _                                        | 'n'               | PropertyLocation.env
+        "publishEnabled"        | true                  | _                                        | 'no'              | PropertyLocation.env
+        "publishEnabled"        | true                  | _                                        | 'NO'              | PropertyLocation.env
+        "publishEnabled"        | true                  | _                                        | true              | PropertyLocation.property
+        "publishEnabled"        | true                  | _                                        | 1                 | PropertyLocation.property
+        "publishEnabled"        | true                  | _                                        | "TRUE"            | PropertyLocation.property
+        "publishEnabled"        | true                  | _                                        | 'y'               | PropertyLocation.property
+        "publishEnabled"        | true                  | _                                        | 'yes'             | PropertyLocation.property
+        "publishEnabled"        | true                  | _                                        | 'YES'             | PropertyLocation.property
+        "publishEnabled"        | true                  | _                                        | false             | PropertyLocation.property
+        "publishEnabled"        | true                  | _                                        | 0                 | PropertyLocation.property
+        "publishEnabled"        | true                  | _                                        | "FALSE"           | PropertyLocation.property
+        "publishEnabled"        | true                  | _                                        | 'n'               | PropertyLocation.property
+        "publishEnabled"        | true                  | _                                        | 'no'              | PropertyLocation.property
+        "publishEnabled"        | true                  | _                                        | 'NO'              | PropertyLocation.property
+        "publishEnabled"        | true                  | _                                        | true              | PropertyLocation.script
+        "publishEnabled"        | false                 | _                                        | false             | PropertyLocation.script
+        "publishEnabled"        | true                  | _                                        | null              | PropertyLocation.none
 
         testValue = (expectedValue == _) ? value : expectedValue
         reason = location.reason() + ((location == PropertyLocation.none) ? "" : " with '$providedValue'")
@@ -136,4 +163,40 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         "defaultDestinations" | "setDefaultDestinations" | ["group1", "group2"] | "List<String>" | [[name: "group1"], [name: "group2"]]
         value = wrapValueBasedOnType(rawValue, type)
     }
+
+    static String apiToken = System.env["ATLAS_APP_CENTER_INTEGRATION_API_TOKEN"]
+    static String owner = System.env["ATLAS_APP_CENTER_OWNER"]
+    static String applicationIdentifier = System.env["ATLAS_APP_CENTER_INTEGRATION_APPLICATION_IDENTIFIER"]
+
+    @Unroll()
+    def "task :#taskName #message on task :#dependedTask when enabled is #enabled"() {
+        given: "a project with property set"
+        buildFile << """
+            appCenter {
+                owner = "$owner"
+                apiToken = "$apiToken"
+                applicationIdentifier = "$applicationIdentifier"
+                publishEnabled = ${enabled}
+            }
+        """
+
+        and: "a dummy ipa binary to upload"
+        def testFile = getClass().getClassLoader().getResource("test.ipa").path
+        buildFile << """
+            publishAppCenter.binary = "$testFile"
+        """.stripIndent()
+
+        when:
+        def result = runTasksSuccessfully(taskName)
+
+        then:
+        result.wasExecuted(dependedTask) == dependsOnTask
+
+        where:
+        taskName  | dependedTask       | enabled | dependsOnTask
+        "publish" | "publishAppCenter" | true    | true
+        "publish" | "publishAppCenter" | false   | false
+        message = (dependsOnTask) ? "depends" : "depends not"
+    }
+
 }

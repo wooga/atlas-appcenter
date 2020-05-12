@@ -10,12 +10,14 @@ class DefaultAppCenterPluginExtension implements AppCenterPluginExtension {
     final Property<String> owner
     final Property<String> applicationIdentifier
     final ListProperty<Map<String, String>> defaultDestinations
+    final Property<Boolean> publishEnabled
 
     DefaultAppCenterPluginExtension(Project project) {
         apiToken = project.objects.property(String)
         owner = project.objects.property(String)
         applicationIdentifier = project.objects.property(String)
         defaultDestinations = project.objects.listProperty(Map)
+        publishEnabled = project.objects.property(Boolean)
     }
 
     @Override
@@ -71,5 +73,15 @@ class DefaultAppCenterPluginExtension implements AppCenterPluginExtension {
     @Override
     void defaultDestinationId(String id) {
         defaultDestinations.add(["id": id])
+    }
+
+    @Override
+    Property<Boolean> isPublishEnabled() {
+        return publishEnabled
+    }
+
+    @Override
+    void setPublishEnabled(boolean enabled) {
+        this.publishEnabled.set(enabled)
     }
 }
