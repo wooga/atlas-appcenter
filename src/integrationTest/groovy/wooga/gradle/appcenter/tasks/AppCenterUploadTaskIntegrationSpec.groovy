@@ -105,7 +105,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         ensureDistributionGroup("Test2")
 
         buildFile << """
-            publishAppCenter.destination "Test", "Test2"
+            publishAppCenter.destinations = ["Test", "Test2"]
         """.stripIndent()
 
         and: "a dummy ipa binary to upload"
@@ -126,6 +126,35 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         def destinations = release["destinations"]
         destinations.any {it["name"] == "Test" || it["name"] == "Test2"}
         !destinations.any {it["name"] == "Collaborators"}
+    }
+
+    def "can publish to custom distribution group in addition to default groups"() {
+        given: "a new distribution group"
+        ensureDistributionGroup("Test")
+        ensureDistributionGroup("Test2")
+
+        buildFile << """
+            publishAppCenter.destination "Test"
+            publishAppCenter.destination "Test2"
+        """.stripIndent()
+
+        and: "a dummy ipa binary to upload"
+        def testFile = getClass().getClassLoader().getResource("test.ipa").path
+        buildFile << """
+            publishAppCenter.binary = "$testFile"
+        """.stripIndent()
+
+        and: "a future version meta file"
+        def versionMeta = new File(projectDir,"build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        assert !versionMeta.exists()
+
+        when:
+        runTasksSuccessfully("publishAppCenter")
+
+        then:
+        def release = getRelease(versionMeta)
+        def destinations = release["destinations"]
+        destinations.any {it["name"] == "Test" || it["name"] == "Test2" || it["name"] == "Collaborators"}
     }
 
     def "fails when distribution group is invalid"() {

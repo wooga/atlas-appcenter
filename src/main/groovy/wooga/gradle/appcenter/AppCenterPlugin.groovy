@@ -40,9 +40,8 @@ class AppCenterPlugin implements Plugin<Project> {
         tasks.withType(AppCenterUploadTask, new Action<AppCenterUploadTask>() {
             @Override
             void execute(AppCenterUploadTask t) {
-                def conventionMapping = t.getConventionMapping()
-                conventionMapping.map("buildVersion", {project.version})
-                conventionMapping.map("destinations", {[["name": "Collaborators"]]})
+                t.buildVersion.set(project.providers.provider({ project.version.toString() }))
+                t.destinations.set([["name": "Collaborators"]])
             }
         })
 

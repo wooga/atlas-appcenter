@@ -1,20 +1,3 @@
-/*
- * Copyright 2019 Wooga GmbH
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package wooga.gradle.appcenter.tasks
 
 import groovy.json.JsonOutput
@@ -30,125 +13,96 @@ import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.entity.mime.content.FileBody
 import org.apache.http.impl.client.HttpClientBuilder
 import org.gradle.api.Action
+import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.file.FileCollection
-import org.gradle.api.internal.ConventionTask
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFile
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
-import org.gradle.internal.impldep.com.google.gson.JsonObject
 import wooga.gradle.appcenter.api.AppCenterBuildInfo
+import wooga.gradle.compat.ProjectLayout
+
 import static org.gradle.util.ConfigureUtil.configureUsing
 
-import java.util.concurrent.Callable
-
-class AppCenterUploadTask extends ConventionTask {
-
-    private Object apiToken
+class AppCenterUploadTask extends DefaultTask {
 
     @Input
-    String getApiToken() {
-        convertToString(apiToken)
+    final Property<String> apiToken
+
+    void setApiToken(String value) {
+        apiToken.set(value)
     }
 
-    void setApiToken(Object value) {
-        apiToken = value
+    void apiToken(String value) {
+        setApiToken(value)
     }
-
-    AppCenterUploadTask apiToken(Object apiToken) {
-        setApiToken(apiToken)
-        this
-    }
-
-    private Object owner
 
     @Input
-    String getOwner() {
-        convertToString(owner)
+    final Property<String> owner
+
+    void setOwner(String value) {
+        owner.set(value)
     }
 
-    void setOwner(Object value) {
-        owner = value
+    void owner(String value) {
+        setOwner(value)
     }
-
-    AppCenterUploadTask owner(Object owner) {
-        setOwner(owner)
-        this
-    }
-
-    private Object buildVersion
 
     @Input
-    String getBuildVersion() {
-        convertToString(buildVersion)
+    final Property<String> buildVersion
+
+    void setBuildVersion(String value) {
+        buildVersion.set(value)
     }
 
-    void setBuildVersion(Object value) {
-        buildVersion = value
+    void buildVersion(String value) {
+        setBuildVersion(value)
     }
-
-    AppCenterUploadTask buildVersion(Object buildVersion) {
-        setBuildVersion(buildVersion)
-        this
-    }
-
-    private Object releaseId
 
     @Optional
     @Input
-    int getReleaseId() {
-        if (!releaseId) {
-            return 0
-        }
+    final Property<Integer> releaseId
 
-        Integer.parseInt(convertToString(releaseId))
+    void setReleaseId(Integer value) {
+        releaseId.set(value)
     }
 
-    void setReleaseId(Object value) {
-        releaseId = value
+    void releaseId(Integer value) {
+        setReleaseId(value)
     }
-
-    AppCenterUploadTask releaseId(Object releaseId) {
-        setReleaseId(releaseId)
-        this
-    }
-
-    private Object applicationIdentifier
 
     @Input
-    String getApplicationIdentifier() {
-        convertToString(applicationIdentifier)
+    final Property<String> applicationIdentifier
+
+    void setApplicationIdentifier(String value) {
+        applicationIdentifier.set(value)
     }
 
-    void setApplicationIdentifier(Object value) {
-        applicationIdentifier = value
+    void applicationIdentifier(String value) {
+        setApplicationIdentifier(value)
     }
-
-    AppCenterUploadTask applicationIdentifier(Object applicationIdentifier) {
-        setApplicationIdentifier(applicationIdentifier)
-        this
-    }
-
-    private Object releaseNotes
 
     @Optional
     @Input
-    String getReleaseNotes() {
-        convertToString(releaseNotes)
+    final Property<String> releaseNotes
+
+    void setReleaseNotes(String value) {
+        releaseNotes.set(value)
     }
 
-    void setReleaseNotes(Object value) {
-        releaseNotes = value
+    void releaseNotes(String value) {
+        setReleaseNotes(value)
     }
 
-    AppCenterUploadTask releaseNotes(Object releaseNotes) {
-        setReleaseNotes(releaseNotes)
-        this
-    }
-
-    private List<Map<String,String>> destinations = new ArrayList<>()
-
+    @Optional
     @Input
-    protected List<Map<String,String>> getDestinations() {
-        destinations
+    final ListProperty<Map<String, String>> destinations
+
+    void setDestinations(Iterable<String> value) {
+        destinations.set(value.collect {["name": it]})
     }
 
     void destination(String name) {
@@ -182,42 +136,46 @@ class AppCenterUploadTask extends ConventionTask {
         action.execute(buildInfo)
     }
 
-    private Object binary
+    @InputFile
+    final RegularFileProperty binary
 
-    @SkipWhenEmpty
-    @InputFiles
-    protected FileCollection getInputFiles() {
-        if (!binary) {
-            return project.files()
-        }
-        return project.files(binary)
+    void setBinary(String value) {
+        binary.set(project.file(value))
     }
 
-    File getBinary() {
-
-        def files = getInputFiles()
-        if (files.size() > 0) {
-            return files.getSingleFile()
-        }
-        return null
+    void setBinary(File value) {
+        binary.set(value)
     }
 
-    void setBinary(Object value) {
-        binary = value
+    void binary(String value) {
+        setBinary(value)
     }
 
-    AppCenterUploadTask binary(Object binary) {
-        setBinary(binary)
-        this
+    void binary(File value) {
+        setBinary(value)
     }
 
-    @OutputFiles
-    protected FileCollection getOutputFiles() {
-        return project.files(getUploadVersionMetaData())
-    }
+    @Internal
+    protected final DirectoryProperty outputDir
 
-    File getUploadVersionMetaData() {
-        new File(temporaryDir, "${getOwner()}_${getApplicationIdentifier()}.json")
+    @OutputFile
+    final Provider<RegularFile> uploadVersionMetaData
+
+    AppCenterUploadTask() {
+        def projectLayout = new ProjectLayout(project)
+        apiToken = project.objects.property(String)
+        owner = project.objects.property(String)
+        buildVersion = project.objects.property(String)
+        releaseId = project.objects.property(Integer)
+        applicationIdentifier = project.objects.property(String)
+        releaseNotes = project.objects.property(String)
+        destinations = project.objects.listProperty(Map)
+
+        binary = projectLayout.fileProperty()
+        outputDir = projectLayout.directoryProperty()
+        outputDir.set(temporaryDir)
+
+        uploadVersionMetaData = outputDir.file(owner.map({ owner -> "${owner}_${applicationIdentifier.get()}.json" }))
     }
 
     private static Map createUploadResource(HttpClient client, String owner, String applicationIdentifier, String apiToken, String buildVersion, int releaseId = 0) {
@@ -284,7 +242,7 @@ class AppCenterUploadTask extends ConventionTask {
         jsonSlurper.parseText(response.entity.content.text) as Map
     }
 
-    private static void distribute(HttpClient client, String owner, String applicationIdentifier, String apiToken, String releaseId, List<Map<String,String>> destinations, AppCenterBuildInfo buildInfo, String releaseNotes) {
+    private static void distribute(HttpClient client, String owner, String applicationIdentifier, String apiToken, String releaseId, List<Map<String, String>> destinations, AppCenterBuildInfo buildInfo, String releaseNotes) {
         //     curl -X PATCH --header 'Content-Type: application/json'
         //                   --header 'Accept: application/json'
         //                   --header 'X-API-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
@@ -300,15 +258,15 @@ class AppCenterUploadTask extends ConventionTask {
 
         def build = [:]
 
-        if(buildInfo.branchName && !buildInfo.branchName.empty) {
+        if (buildInfo.branchName && !buildInfo.branchName.empty) {
             build["branch_name"] = buildInfo.branchName
         }
 
-        if(buildInfo.commitHash && !buildInfo.commitHash.empty) {
+        if (buildInfo.commitHash && !buildInfo.commitHash.empty) {
             build["commit_hash"] = buildInfo.commitHash
         }
 
-        if(buildInfo.commitMessage && !buildInfo.commitMessage.empty) {
+        if (buildInfo.commitMessage && !buildInfo.commitMessage.empty) {
             build["commit_message"] = buildInfo.commitMessage
         }
 
@@ -326,34 +284,33 @@ class AppCenterUploadTask extends ConventionTask {
     @TaskAction
     protected void upload() {
         HttpClient client = HttpClientBuilder.create().build()
-        def uploadResource = createUploadResource(client, getOwner(), getApplicationIdentifier(), getApiToken(), getBuildVersion(), getReleaseId())
+        String owner = owner.get()
+        String applicationIdentifier = applicationIdentifier.get()
+        String apiToken = apiToken.get()
+        String buildVersion = buildVersion.get()
+        Integer releaseId = releaseId.getOrElse(0)
+        File binary = binary.get().asFile
+        List<Map<String, String>> destinations = destinations.getOrElse([])
+
+        String releaseNotes = releaseNotes.getOrElse("")
+
+        def uploadResource = createUploadResource(client, owner, applicationIdentifier, apiToken, buildVersion, releaseId)
 
         String uploadUrl = uploadResource["upload_url"]
         String uploadId = uploadResource["upload_id"]
 
-        uploadResources(client, getApiToken(), uploadUrl, getBinary())
+        uploadResources(client, apiToken, uploadUrl, binary)
 
-        def resource = commitResource(client, getOwner(), getApplicationIdentifier(), getApiToken(), uploadId)
-        String releaseId = resource["release_id"].toString()
+        def resource = commitResource(client, owner, applicationIdentifier, apiToken, uploadId)
+        String finalReleaseId = resource["release_id"].toString()
         String releaseUrl = resource["release_url"].toString()
 
-        distribute(client, getOwner(), getApplicationIdentifier(), getApiToken(), releaseId, getDestinations(), getBuildInfo(), getReleaseNotes() ?: "")
+        distribute(client, owner, applicationIdentifier, apiToken, finalReleaseId, destinations, getBuildInfo(), releaseNotes)
 
-        logger.info("published to AppCenter release: ${releaseId}")
+        logger.info("published to AppCenter release: ${finalReleaseId}")
         logger.info("release_url: ${releaseUrl}")
 
-        getUploadVersionMetaData() << JsonOutput.prettyPrint(JsonOutput.toJson(resource))
+        uploadVersionMetaData.get().asFile << JsonOutput.prettyPrint(JsonOutput.toJson(resource))
     }
 
-    private static String convertToString(Object value) {
-        if (!value) {
-            return null
-        }
-
-        if (value instanceof Callable) {
-            value = ((Callable) value).call()
-        }
-
-        value.toString()
-    }
 }
