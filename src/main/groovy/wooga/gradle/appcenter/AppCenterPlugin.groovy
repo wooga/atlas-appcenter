@@ -20,10 +20,12 @@ import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.plugins.PublishingPlugin
+import wooga.gradle.appcenter.internal.DefaultAppCenterPluginExtension
 import wooga.gradle.appcenter.tasks.AppCenterUploadTask
 
 class AppCenterPlugin implements Plugin<Project> {
 
+    static final String EXTENSION_NAME = "appCenter"
     static final String PUBLISH_APP_CENTER_TASK_NAME = "publishAppCenter"
     static final String PUBLISH_APP_CENTER_TASK_DESCRIPTION = "Upload binary to AppCenter."
 
@@ -31,6 +33,8 @@ class AppCenterPlugin implements Plugin<Project> {
     void apply(Project project) {
 
         project.pluginManager.apply(PublishingPlugin.class)
+
+        def extension = create_and_configure_extension(project)
 
         def tasks = project.tasks
 
@@ -41,11 +45,46 @@ class AppCenterPlugin implements Plugin<Project> {
             @Override
             void execute(AppCenterUploadTask t) {
                 t.buildVersion.set(project.providers.provider({ project.version.toString() }))
-                t.destinations.set([["name": "Collaborators"]])
+                t.destinations.set(extension.defaultDestinations)
+                t.applicationIdentifier.set(extension.applicationIdentifier)
+                t.apiToken.set(extension.apiToken)
+                t.owner.set(extension.owner)
             }
         })
 
         def lifecyclePublishTask = tasks.getByName(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME)
         lifecyclePublishTask.dependsOn(publishAppCenter)
+    }
+
+    protected static AppCenterPluginExtension create_and_configure_extension(Project project) {
+        def extension = project.extensions.create(AppCenterPluginExtension, EXTENSION_NAME, DefaultAppCenterPluginExtension, project)
+
+        extension.defaultDestinations.set(project.provider({
+            String rawValue = (project.properties[AppCenterConsts.DEFAULT_DESTINATIONS_OPTION]
+                    ?: System.getenv()[AppCenterConsts.DEFAULT_DESTINATIONS_ENV_VAR]) as String
+
+            if (rawValue) {
+                return rawValue.split(',').collect {["name": it.trim()]}
+            }
+
+            AppCenterConsts.defaultDestinations
+        }))
+
+        extension.apiToken.set(project.provider({
+            (project.properties[AppCenterConsts.API_TOKEN_OPTION]
+                    ?: System.getenv()[AppCenterConsts.API_TOKEN_ENV_VAR]) as String
+        }))
+
+        extension.owner.set(project.provider({
+            (project.properties[AppCenterConsts.OWNER_OPTION]
+                    ?: System.getenv()[AppCenterConsts.OWNER_ENV_VAR]) as String
+        }))
+
+        extension.applicationIdentifier.set(project.provider({
+            (project.properties[AppCenterConsts.APPLICATION_IDENTIFIER_OPTION]
+                    ?: System.getenv()[AppCenterConsts.APPLICATION_IDENTIFIER_ENV_VAR]) as String
+        }))
+
+        extension
     }
 }
