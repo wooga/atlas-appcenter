@@ -145,6 +145,7 @@ class AppCenterUploadTask extends DefaultTask {
 
     void setBinary(String value) {
         binary.set(project.file(value))
+        RegularFile
     }
 
     void setBinary(File value) {
