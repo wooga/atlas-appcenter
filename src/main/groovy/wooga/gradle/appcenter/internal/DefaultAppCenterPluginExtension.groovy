@@ -56,6 +56,11 @@ class DefaultAppCenterPluginExtension implements AppCenterPluginExtension {
     }
 
     @Override
+    void setDefaultDestinations(String... destinations) {
+        defaultDestinations.set(destinations.collect {["name": it]})
+    }
+
+    @Override
     void defaultDestination(String name) {
         defaultDestinations.add(["name": name])
     }

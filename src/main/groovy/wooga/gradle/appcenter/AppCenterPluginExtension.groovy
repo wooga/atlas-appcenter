@@ -36,6 +36,7 @@ interface AppCenterPluginExtension {
     ListProperty<Map<String, String>> getDefaultDestinations()
 
     void setDefaultDestinations(Iterable<String> value)
+    void setDefaultDestinations(String... destinations)
     void defaultDestination(String name)
     void defaultDestination(Iterable<String> destinations)
     void defaultDestination(String... destinations)

@@ -105,6 +105,10 @@ class AppCenterUploadTask extends DefaultTask {
         destinations.set(value.collect {["name": it]})
     }
 
+    void setDestinations(String... value) {
+        destinations.set(value.collect {["name": it]})
+    }
+
     void destination(String name) {
         destinations.add(["name": name])
     }
