@@ -68,6 +68,9 @@ class IntegrationSpec extends nebula.test.IntegrationSpec{
             case "String":
                 value = "$rawValueEscaped"
                 break
+            case "String[]":
+                value = "'{${rawValue.collect { '"' + it + '"' }.join(",")}}'.split(',')"
+                break
             case "File":
                 value = "new File('${escapedPath(rawValue.toString())}')"
                 break

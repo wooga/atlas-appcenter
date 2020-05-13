@@ -280,8 +280,8 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         "destinations" | "destination"     | "Test1"            | "String"       | ["Collaborators", "Test1"]
         "destinations" | "destination"     | ["Test1", "Test2"] | "List<String>" | ["Collaborators", "Test1", "Test2"]
         "destinations" | "destination"     | ["Test1", "Test2"] | "String..."    | ["Collaborators", "Test1", "Test2"]
-        //"destinations" | "destinationId"   | "groupId"            | "String"       | [[name: "Collaborators"], [id: "groupId"]]
         "destinations" | "setDestinations" | ["Test1", "Test2"] | "List<String>" | ["Test1", "Test2"]
+        "destinations" | "setDestinations" | ["Test1", "Test2"] | "String..."    | ["Test1", "Test2"]
         value = wrapValueBasedOnType(rawValue, type)
     }
 
