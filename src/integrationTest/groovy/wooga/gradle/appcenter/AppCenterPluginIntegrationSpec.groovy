@@ -133,6 +133,53 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         reason = location.reason() + ((location == PropertyLocation.none) ? "" : " with '$providedValue'")
     }
 
+    @Unroll
+    def "can set property :#property with :#method and type '#type'"() {
+        given: "a task to print appCenter properties"
+        buildFile << """
+            task(custom) {
+                doLast {
+                    def value = appCenter.${property}.get()
+                    println("appCenter.${property}: " + value)
+                }
+            }
+        """
+
+        and: "some configured property"
+        buildFile << "appCenter.${method}(${value})"
+
+        and: "the test value with replace placeholders"
+        if (value instanceof String) {
+            value = value.replaceAll("#projectDir#", escapedPath(projectDir.path))
+        }
+
+        when: ""
+        def result = runTasksSuccessfully("custom")
+
+        then:
+        result.standardOutput.contains("appCenter.${property}: ${rawValue}")
+
+        where:
+        property                | method                      | rawValue                 | type
+        "apiToken"              | "apiToken"                  | "testToken1"             | "String"
+        "apiToken"              | "apiToken.set"              | "testToken2"             | "String"
+        "apiToken"              | "apiToken.set"              | "testToken3"             | "Provider<String>"
+        "apiToken"              | "setApiToken"               | "testToken4"             | "String"
+        "apiToken"              | "setApiToken"               | "testToken5"             | "Provider<String>"
+        "owner"                 | "owner"                     | "owner1"                 | "String"
+        "owner"                 | "owner.set"                 | "owner2"                 | "String"
+        "owner"                 | "owner.set"                 | "owner3"                 | "Provider<String>"
+        "owner"                 | "setOwner"                  | "owner4"                 | "String"
+        "owner"                 | "setOwner"                  | "owner5"                 | "Provider<String>"
+        "applicationIdentifier" | "applicationIdentifier"     | "applicationIdentifier1" | "String"
+        "applicationIdentifier" | "applicationIdentifier.set" | "applicationIdentifier2" | "String"
+        "applicationIdentifier" | "applicationIdentifier.set" | "applicationIdentifier3" | "Provider<String>"
+        "applicationIdentifier" | "setApplicationIdentifier"  | "applicationIdentifier4" | "String"
+        "applicationIdentifier" | "setApplicationIdentifier"  | "applicationIdentifier5" | "Provider<String>"
+        value = wrapValueBasedOnType(rawValue, type)
+    }
+
+
     @Unroll()
     def "can add publish destinations with :#method and type '#type'"() {
         given: "a custom task to print extension property"
