@@ -28,7 +28,7 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
     }
 
     String envNameFromProperty(String property) {
-        "APP_CENTER_${property.replaceAll(/([A-Z])/, "_\$1").toUpperCase()}"
+        "APP_CENTER_${property.replaceAll(/([A-Z.])/, "_\$1").toUpperCase()}"
     }
 
     @Unroll()
@@ -129,6 +129,15 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         "publishEnabled"        | false                        | _                                        | false             | PropertyLocation.script
         "publishEnabled"        | true                         | _                                        | null              | PropertyLocation.none
 
+        "retryCount"            | 1                            | _                                        | 1                 | PropertyLocation.property
+        "retryCount"            | 2                            | _                                        | 2                 | PropertyLocation.env
+        "retryCount"            | 4                            | _                                        | 4                 | PropertyLocation.script
+        "retryCount"            | 3                            | _                                        | null              | PropertyLocation.none
+
+        "retryTimeout"          | 1000                         | _                                        | 1000              | PropertyLocation.property
+        "retryTimeout"          | 2000                         | _                                        | 2000              | PropertyLocation.env
+        "retryTimeout"          | 4000                         | _                                        | 4000              | PropertyLocation.script
+        "retryTimeout"          | 5000                         | _                                        | null              | PropertyLocation.none
         testValue = (expectedValue == _) ? value : expectedValue
         reason = location.reason() + ((location == PropertyLocation.none) ? "" : " with '$providedValue'")
     }

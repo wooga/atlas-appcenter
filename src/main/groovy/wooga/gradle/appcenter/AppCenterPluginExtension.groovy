@@ -17,6 +17,7 @@
 
 package wooga.gradle.appcenter
 
+
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
@@ -45,4 +46,13 @@ interface AppCenterPluginExtension {
     Property<Boolean> getPublishEnabled()
     Property<Boolean> isPublishEnabled()
     void setPublishEnabled(final boolean enabled)
+
+    Property<Long> getRetryTimeout()
+    void setRetryTimeout(Long value)
+    void retryTimeout(Long value)
+
+    Property<Integer> getRetryCount()
+    void setRetryCount(Integer value)
+    void retryCount(Integer value)
+
 }

@@ -21,6 +21,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.publish.plugins.PublishingPlugin
 import wooga.gradle.appcenter.internal.DefaultAppCenterPluginExtension
+
 import wooga.gradle.appcenter.tasks.AppCenterUploadTask
 
 class AppCenterPlugin implements Plugin<Project> {
@@ -49,13 +50,14 @@ class AppCenterPlugin implements Plugin<Project> {
                 t.applicationIdentifier.set(extension.applicationIdentifier)
                 t.apiToken.set(extension.apiToken)
                 t.owner.set(extension.owner)
-            }
-        })
+                t.retryCount.set(extension.retryCount)
+                t.retryTimeout.set(extension.retryTimeout)
+        }})
 
         project.afterEvaluate(new Action<Project>() {
             @Override
             void execute(Project _) {
-                if(extension.isPublishEnabled().get()) {
+                if (extension.isPublishEnabled().get()) {
                     def lifecyclePublishTask = tasks.getByName(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME)
                     lifecyclePublishTask.dependsOn(publishAppCenter)
                 }
@@ -71,7 +73,7 @@ class AppCenterPlugin implements Plugin<Project> {
                     ?: System.getenv()[AppCenterConsts.DEFAULT_DESTINATIONS_ENV_VAR]) as String
 
             if (rawValue) {
-                return rawValue.split(',').collect {["name": it.trim()]}
+                return rawValue.split(',').collect { ["name": it.trim()] }
             }
 
             AppCenterConsts.defaultDestinations
@@ -101,6 +103,21 @@ class AppCenterPlugin implements Plugin<Project> {
             }
             AppCenterConsts.defaultPublishEnabled
         }))
+
+        extension.retryTimeout.set(project.provider({
+            String rawRetryTimout = (project.properties[AppCenterConsts.RETRY_TIMEOUT_OPTION]
+                    ?: System.getenv()[AppCenterConsts.RETRY_TIMEOUT_ENV_VAR]) as String
+
+            (rawRetryTimout) ? Long.parseLong(rawRetryTimout) : AppCenterConsts.defaultRetryTimeout
+        }))
+
+        extension.retryCount.set(project.provider({
+            String rawRetryCount = (project.properties[AppCenterConsts.RETRY_COUNT_OPTION]
+                    ?: System.getenv()[AppCenterConsts.RETRY_COUNT_ENV_VAR]) as String
+
+            (rawRetryCount) ? Integer.parseInt(rawRetryCount) : AppCenterConsts.defaultRetryCount
+        }))
+
         extension
     }
 }
