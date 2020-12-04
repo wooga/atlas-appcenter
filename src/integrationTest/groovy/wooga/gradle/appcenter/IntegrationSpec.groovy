@@ -97,6 +97,9 @@ class IntegrationSpec extends nebula.test.IntegrationSpec {
             case "List":
                 value = "[${rawValue.collect { '"' + it + '"' }.join(", ")}]"
                 break
+            case "Long":
+                value = "${rawValue}L"
+                break
             default:
                 value = rawValue
         }

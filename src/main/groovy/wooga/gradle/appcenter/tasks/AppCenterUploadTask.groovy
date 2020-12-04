@@ -22,7 +22,9 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
+
 import wooga.gradle.appcenter.api.AppCenterBuildInfo
+import wooga.gradle.appcenter.api.AppCenterRest
 import wooga.gradle.compat.ProjectLayout
 
 import static org.gradle.util.ConfigureUtil.configureUsing
@@ -102,11 +104,11 @@ class AppCenterUploadTask extends DefaultTask {
     final ListProperty<Map<String, String>> destinations
 
     void setDestinations(Iterable<String> value) {
-        destinations.set(value.collect {["name": it]})
+        destinations.set(value.collect { ["name": it] })
     }
 
     void setDestinations(String... value) {
-        destinations.set(value.collect {["name": it]})
+        destinations.set(value.collect { ["name": it] })
     }
 
     void destination(String name) {
@@ -114,11 +116,11 @@ class AppCenterUploadTask extends DefaultTask {
     }
 
     void destination(Iterable<String> destinations) {
-        this.destinations.addAll(destinations.collect {["name": it]})
+        this.destinations.addAll(destinations.collect { ["name": it] })
     }
 
     void destination(String... destinations) {
-        this.destinations.addAll(destinations.collect {["name": it]})
+        this.destinations.addAll(destinations.collect { ["name": it] })
     }
 
     void destinationId(String id) {
@@ -166,6 +168,27 @@ class AppCenterUploadTask extends DefaultTask {
     @OutputFile
     final Provider<RegularFile> uploadVersionMetaData
 
+    @Internal
+    final Property<Long> retryTimeout
+
+    void setRetryTimeout(Long value) {
+        this.retryTimeout.set(value)
+    }
+
+    void retryTimeout(Long value) {
+        setRetryTimeout(value)
+    }
+
+    void setRetryCount(Integer value) {
+        retryCount.set(value)
+    }
+
+    void retryCount(Integer value) {
+        setRetryCount(value)
+    }
+
+    final Property<Integer> retryCount
+
     AppCenterUploadTask() {
         def projectLayout = new ProjectLayout(project)
         apiToken = project.objects.property(String)
@@ -175,7 +198,8 @@ class AppCenterUploadTask extends DefaultTask {
         applicationIdentifier = project.objects.property(String)
         releaseNotes = project.objects.property(String)
         destinations = project.objects.listProperty(Map)
-
+        retryTimeout = project.objects.property(Long)
+        retryCount = project.objects.property(Integer)
         binary = projectLayout.fileProperty()
         outputDir = projectLayout.directoryProperty()
         outputDir.set(temporaryDir)
@@ -205,22 +229,6 @@ class AppCenterUploadTask extends DefaultTask {
 
         def jsonSlurper = new JsonSlurper()
         jsonSlurper.parseText(response.entity.content.text) as Map
-    }
-
-    private static uploadResources(HttpClient client, String apiToken, String uploadUrl, File binary) {
-        HttpPost post = new HttpPost(uploadUrl)
-        FileBody ipa = new FileBody(binary)
-        post.setHeader("X-API-Token", apiToken)
-        HttpEntity content = MultipartEntityBuilder.create()
-                .addPart("ipa", ipa)
-                .build()
-
-        post.setEntity(content)
-        HttpResponse response = client.execute(post)
-
-        if (response.statusLine.statusCode != 204) {
-            throw new GradleException("unable to upload to provided upload url" + response.statusLine.toString())
-        }
     }
 
     private static Map commitResource(HttpClient client, String owner, String applicationIdentifier, String apiToken, String uploadId) {
@@ -304,7 +312,7 @@ class AppCenterUploadTask extends DefaultTask {
         String uploadUrl = uploadResource["upload_url"]
         String uploadId = uploadResource["upload_id"]
 
-        uploadResources(client, apiToken, uploadUrl, binary)
+        AppCenterRest.uploadResources(client, apiToken, uploadUrl, binary, retryCount.getOrElse(0), retryTimeout.getOrElse(0))
 
         def resource = commitResource(client, owner, applicationIdentifier, apiToken, uploadId)
         String finalReleaseId = resource["release_id"].toString()

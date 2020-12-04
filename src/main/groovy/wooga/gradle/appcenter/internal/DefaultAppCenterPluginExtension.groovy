@@ -1,5 +1,6 @@
 package wooga.gradle.appcenter.internal
 
+
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
@@ -11,6 +12,8 @@ class DefaultAppCenterPluginExtension implements AppCenterPluginExtension {
     final Property<String> applicationIdentifier
     final ListProperty<Map<String, String>> defaultDestinations
     final Property<Boolean> publishEnabled
+    final Property<Long> retryTimeout
+    final Property<Integer> retryCount
 
     DefaultAppCenterPluginExtension(Project project) {
         apiToken = project.objects.property(String)
@@ -18,6 +21,9 @@ class DefaultAppCenterPluginExtension implements AppCenterPluginExtension {
         applicationIdentifier = project.objects.property(String)
         defaultDestinations = project.objects.listProperty(Map)
         publishEnabled = project.objects.property(Boolean)
+        retryTimeout = project.objects.property(Long)
+        retryCount = project.objects.property(Integer)
+
     }
 
     @Override
@@ -88,5 +94,25 @@ class DefaultAppCenterPluginExtension implements AppCenterPluginExtension {
     @Override
     void setPublishEnabled(boolean enabled) {
         this.publishEnabled.set(enabled)
+    }
+
+    @Override
+    void setRetryTimeout(Long value) {
+        this.retryTimeout.set(value)
+    }
+
+    @Override
+    void retryTimeout(Long value) {
+        setRetryTimeout(value)
+    }
+
+    @Override
+    void setRetryCount(Integer value) {
+        retryCount.set(value)
+    }
+
+    @Override
+    void retryCount(Integer value) {
+        setRetryTimeout(value)
     }
 }
