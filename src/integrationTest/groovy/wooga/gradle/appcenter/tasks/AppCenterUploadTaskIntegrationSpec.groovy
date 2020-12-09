@@ -201,7 +201,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         def jsonSlurper = new JsonSlurper()
         def releaseMeta = jsonSlurper.parse(versionMeta)
 
-        def releaseId = releaseMeta["release_id"]
+        String releaseId = releaseMeta["id"]
         def release = getRelease(releaseId)
 
         def buildInfo = release["build"]
@@ -234,7 +234,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         def jsonSlurper = new JsonSlurper()
         def releaseMeta = jsonSlurper.parse(versionMeta)
 
-        def releaseId = releaseMeta["release_id"]
+        String releaseId = releaseMeta["id"]
         def release = getRelease(releaseId)
         release['release_notes'] == releaseNotes
 
@@ -332,11 +332,6 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         "buildVersion"          | "buildVersion.set"          | "buildVersion3"              | "Provider<String>"
         "buildVersion"          | "setBuildVersion"           | "buildVersion4"              | "String"
         "buildVersion"          | "setBuildVersion"           | "buildVersion5"              | "Provider<String>"
-        "releaseId"             | "releaseId"                 | 1                            | "Integer"
-        "releaseId"             | "releaseId.set"             | 2                            | "Integer"
-        "releaseId"             | "releaseId.set"             | 3                            | "Provider<Integer>"
-        "releaseId"             | "setReleaseId"              | 4                            | "Integer"
-        "releaseId"             | "setReleaseId"              | 5                            | "Provider<Integer>"
         "applicationIdentifier" | "applicationIdentifier"     | "applicationIdentifier1"     | "String"
         "applicationIdentifier" | "applicationIdentifier.set" | "applicationIdentifier2"     | "String"
         "applicationIdentifier" | "applicationIdentifier.set" | "applicationIdentifier3"     | "Provider<String>"
@@ -453,7 +448,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         def jsonSlurper = new JsonSlurper()
         def releaseMeta = jsonSlurper.parse(versionMeta)
 
-        String releaseId = releaseMeta["release_id"]
+        String releaseId = releaseMeta["id"]
         getRelease(releaseId)
     }
 
