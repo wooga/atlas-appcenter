@@ -1,20 +1,10 @@
 package wooga.gradle.appcenter.tasks
 
 import groovy.json.JsonOutput
-import groovy.json.JsonSlurper
-import org.apache.http.HttpEntity
-import org.apache.http.HttpResponse
 import org.apache.http.client.HttpClient
-import org.apache.http.client.methods.HttpPatch
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.entity.ContentType
-import org.apache.http.entity.StringEntity
-import org.apache.http.entity.mime.MultipartEntityBuilder
-import org.apache.http.entity.mime.content.FileBody
 import org.apache.http.impl.client.HttpClientBuilder
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
-import org.gradle.api.GradleException
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
@@ -22,7 +12,6 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
-
 import wooga.gradle.appcenter.api.AppCenterBuildInfo
 import wooga.gradle.appcenter.api.AppCenterRest
 import wooga.gradle.compat.ProjectLayout
@@ -66,14 +55,14 @@ class AppCenterUploadTask extends DefaultTask {
 
     @Optional
     @Input
-    final Property<Integer> releaseId
+    final Property<String> buildNumber
 
-    void setReleaseId(Integer value) {
-        releaseId.set(value)
+    void setBuildNumber(String value) {
+        buildNumber.set(value)
     }
 
-    void releaseId(Integer value) {
-        setReleaseId(value)
+    void releaseId(String value) {
+        setBuildNumber(value)
     }
 
     @Input
@@ -194,7 +183,7 @@ class AppCenterUploadTask extends DefaultTask {
         apiToken = project.objects.property(String)
         owner = project.objects.property(String)
         buildVersion = project.objects.property(String)
-        releaseId = project.objects.property(Integer)
+        buildNumber = project.objects.property(String)
         applicationIdentifier = project.objects.property(String)
         releaseNotes = project.objects.property(String)
         destinations = project.objects.listProperty(Map)
@@ -207,123 +196,42 @@ class AppCenterUploadTask extends DefaultTask {
         uploadVersionMetaData = outputDir.file(owner.map({ owner -> "${owner}_${applicationIdentifier.get()}.json" }))
     }
 
-    private static Map createUploadResource(HttpClient client, String owner, String applicationIdentifier, String apiToken, String buildVersion, int releaseId = 0) {
-        // curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json'
-        //      --header 'X-API-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-        //      'https://api.appcenter.ms/v0.1/apps/JoshuaWeber/APIExample/release_uploads'
-
-        def uri = "https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifier}/release_uploads"
-        HttpPost post = new HttpPost(uri)
-        post.setHeader("Accept", 'application/json')
-        post.setHeader("X-API-Token", apiToken)
-
-
-        def body = ["build_version": buildVersion, "release_id": releaseId]
-
-        post.setEntity(new StringEntity(JsonOutput.toJson(body), ContentType.APPLICATION_JSON))
-
-        HttpResponse response = client.execute(post)
-        if (response.statusLine.statusCode != 201) {
-            throw new GradleException("unable to create upload resource for ${owner}/${applicationIdentifier}")
-        }
-
-        def jsonSlurper = new JsonSlurper()
-        jsonSlurper.parseText(response.entity.content.text) as Map
-    }
-
-    private static Map commitResource(HttpClient client, String owner, String applicationIdentifier, String apiToken, String uploadId) {
-        // curl -X PATCH --header 'Content-Type: application/json'
-        //               --header 'Accept: application/json'
-        //               --header 'X-API-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' -d '{ "status": "committed"  }'
-        //               'https://api.appcenter.ms/v0.1/apps/JoshuaWeber/APITesting/release_uploads/c18df340-069f-0135-3290-22000b559634'
-        // https://openapi.appcenter.ms/#/distribute/releaseUploads_complete
-
-        def uri = "https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifier}/release_uploads/${uploadId}"
-        HttpPatch patch = new HttpPatch(uri)
-        patch.setHeader("Accept", 'application/json')
-        patch.setHeader("X-API-Token", apiToken)
-
-        def body = ["status": "committed"]
-        patch.setEntity(new StringEntity(JsonOutput.toJson(body), ContentType.APPLICATION_JSON))
-
-        HttpResponse response = client.execute(patch)
-        if (response.statusLine.statusCode != 200) {
-            throw new GradleException("unable to commit upload resource ${uploadId} for ${owner}/${applicationIdentifier}")
-        }
-
-        def jsonSlurper = new JsonSlurper()
-        jsonSlurper.parseText(response.entity.content.text) as Map
-    }
-
-    private static void distribute(HttpClient client, String owner, String applicationIdentifier, String apiToken, String releaseId, List<Map<String, String>> destinations, AppCenterBuildInfo buildInfo, String releaseNotes) {
-        //     curl -X PATCH --header 'Content-Type: application/json'
-        //                   --header 'Accept: application/json'
-        //                   --header 'X-API-Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-        //                   -d '{ "destinations": [{"name":"QA Testers"}], "release_notes": "Example new release via the APIs" }'
-        //                   'https://api.appcenter.ms/v0.1/apps/JoshuaWeber/APITesting/releases/2'
-        //
-        // https://openapi.appcenter.ms/#/distribute/releases_update
-
-        def uri = "https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifier}/releases/${releaseId}"
-        HttpPatch patch = new HttpPatch(uri)
-        patch.setHeader("Accept", 'application/json')
-        patch.setHeader("X-API-Token", apiToken)
-
-        def build = [:]
-
-        if (buildInfo.branchName && !buildInfo.branchName.empty) {
-            build["branch_name"] = buildInfo.branchName
-        }
-
-        if (buildInfo.commitHash && !buildInfo.commitHash.empty) {
-            build["commit_hash"] = buildInfo.commitHash
-        }
-
-        if (buildInfo.commitMessage && !buildInfo.commitMessage.empty) {
-            build["commit_message"] = buildInfo.commitMessage
-        }
-
-        def body = ["destinations": destinations, "build": build, "release_notes": releaseNotes]
-
-        patch.setEntity(new StringEntity(JsonOutput.toJson(body), ContentType.APPLICATION_JSON))
-
-        HttpResponse response = client.execute(patch)
-
-        if (response.statusLine.statusCode != 200) {
-            throw new GradleException("unable to distribute release ${releaseId} for ${owner}/${applicationIdentifier}")
-        }
-    }
-
     @TaskAction
     protected void upload() {
         HttpClient client = HttpClientBuilder.create().build()
         String owner = owner.get()
         String applicationIdentifier = applicationIdentifier.get()
         String apiToken = apiToken.get()
-        String buildVersion = buildVersion.get()
-        Integer releaseId = releaseId.getOrElse(0)
+        String buildVersion = buildVersion.getOrNull()
+        String buildNumber = buildNumber.getOrNull()
         File binary = binary.get().asFile
         List<Map<String, String>> destinations = destinations.getOrElse([])
 
         String releaseNotes = releaseNotes.getOrElse("")
 
-        def uploadResource = createUploadResource(client, owner, applicationIdentifier, apiToken, buildVersion, releaseId)
+        def releaseUpload = AppCenterRest.createReleaseUpload(client, owner, applicationIdentifier, apiToken, buildVersion, buildNumber)
 
-        String uploadUrl = uploadResource["upload_url"]
-        String uploadId = uploadResource["upload_id"]
+        String uploadId = releaseUpload['id']
+        String uploadDomain = releaseUpload['upload_domain']
+        String assetId = releaseUpload['package_asset_id']
+        String token = releaseUpload['token']
 
-        AppCenterRest.uploadResources(client, apiToken, uploadUrl, binary, retryCount.getOrElse(0), retryTimeout.getOrElse(0))
+        AppCenterRest.uploadFile(client, uploadDomain, assetId, token, binary)
 
-        def resource = commitResource(client, owner, applicationIdentifier, apiToken, uploadId)
-        String finalReleaseId = resource["release_id"].toString()
-        String releaseUrl = resource["release_url"].toString()
+        AppCenterRest.updateReleaseUpload(client, owner, applicationIdentifier, apiToken, uploadId, "uploadFinished")
 
-        distribute(client, owner, applicationIdentifier, apiToken, finalReleaseId, destinations, getBuildInfo(), releaseNotes)
+        def releaseId = AppCenterRest.pollForReleaseId(client, owner, applicationIdentifier, apiToken, uploadId)
+        def release = AppCenterRest.getRelease(client, owner, applicationIdentifier, apiToken, releaseId)
 
-        logger.info("published to AppCenter release: ${finalReleaseId}")
-        logger.info("release_url: ${releaseUrl}")
+        String downloadUrl = release["download_url"].toString()
+        String installUrl = release["install_url"].toString()
 
-        uploadVersionMetaData.get().asFile << JsonOutput.prettyPrint(JsonOutput.toJson(resource))
+        AppCenterRest.distribute(client, owner, applicationIdentifier, apiToken, releaseId, destinations, getBuildInfo(), releaseNotes)
+
+        logger.info("published to AppCenter release: ${releaseId}")
+        logger.info("download_url: ${downloadUrl}")
+        logger.info("install_url: ${installUrl}")
+
+        uploadVersionMetaData.get().asFile << JsonOutput.prettyPrint(JsonOutput.toJson(release))
     }
-
 }
