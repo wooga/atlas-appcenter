@@ -211,16 +211,10 @@ class AppCenterUploadTask extends DefaultTask {
 
         def releaseUpload = AppCenterRest.createReleaseUpload(client, owner, applicationIdentifier, apiToken, buildVersion, buildNumber)
 
-        String uploadId = releaseUpload['id']
-        String uploadDomain = releaseUpload['upload_domain']
-        String assetId = releaseUpload['package_asset_id']
-        String token = releaseUpload['token']
+        AppCenterRest.uploadFile(client, releaseUpload, binary)
+        AppCenterRest.updateReleaseUpload(client, owner, applicationIdentifier, apiToken, releaseUpload.id, AppCenterRest.ReleaseUploadStatus.uploadFinished)
 
-        AppCenterRest.uploadFile(client, uploadDomain, assetId, token, binary)
-
-        AppCenterRest.updateReleaseUpload(client, owner, applicationIdentifier, apiToken, uploadId, "uploadFinished")
-
-        def releaseId = AppCenterRest.pollForReleaseId(client, owner, applicationIdentifier, apiToken, uploadId)
+        def releaseId = AppCenterRest.pollForReleaseId(client, owner, applicationIdentifier, apiToken, releaseUpload.id)
         def release = AppCenterRest.getRelease(client, owner, applicationIdentifier, apiToken, releaseId)
 
         String downloadUrl = release["download_url"].toString()

@@ -21,9 +21,9 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import org.apache.http.HttpResponse
 import org.apache.http.client.HttpClient
+import org.apache.http.client.methods.HttpDelete
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
-import org.apache.http.client.methods.HttpDelete
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClientBuilder
@@ -34,7 +34,8 @@ import wooga.gradle.appcenter.IntegrationSpec
 class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
     static String apiToken = System.env["ATLAS_APP_CENTER_INTEGRATION_API_TOKEN"]
     static String owner = System.env["ATLAS_APP_CENTER_OWNER"]
-    static String applicationIdentifier = System.env["ATLAS_APP_CENTER_INTEGRATION_APPLICATION_IDENTIFIER"]
+    static String applicationIdentifierIos = System.env["ATLAS_APP_CENTER_INTEGRATION_APPLICATION_IDENTIFIER_IOS"]
+    static String applicationIdentifierAndroid = System.env["ATLAS_APP_CENTER_INTEGRATION_APPLICATION_IDENTIFIER_ANDROID"]
 
     def setup() {
         buildFile << """
@@ -43,20 +44,77 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
             publishAppCenter {
                 owner = "$owner"
                 apiToken = "$apiToken"
-                applicationIdentifier = "$applicationIdentifier"
+                applicationIdentifier = "$applicationIdentifierIos"
             }
         """.stripIndent()
     }
 
-    def "uploads dummy ipa to AppCenter successfully"() {
-        given: "a dummy ipa binary to upload"
-        def testFile = getClass().getClassLoader().getResource("test.ipa").path
+    void writeRandomData(File destination, Long fileSize) {
+        def random = new Random()
+        def chunkSize = 1024 * 1024 * 4
+        def chunksToWrite = fileSize / chunkSize
+
+        destination.withDataOutputStream {
+            for (int i = 0; i < chunksToWrite; i++) {
+                def chunk = new byte[chunkSize]
+                random.nextBytes(chunk)
+                it.write(chunk)
+            }
+        }
+    }
+
+    File createBigUploadBinary(File baseBinary, File destinationDir, Long fileSize) {
+        def output = new File(destinationDir, baseBinary.name)
+        def packagePayloadDir = File.createTempDir(baseBinary.name, "payload")
+
+        def ant = new AntBuilder()
+        ant.unzip(src: baseBinary,
+                dest: packagePayloadDir.path,
+                overwrite: "false")
+
+        writeRandomData(new File(packagePayloadDir, "test.bin"), fileSize - baseBinary.size())
+
+        ant.zip(destfile: output.path, basedir: packagePayloadDir.path)
+
+        output
+    }
+
+    @Unroll("uploads big dummy #fileType to AppCenter successfully")
+    def "uploads big artifacts"() {
+        given: "a dummy ipa binary increased in filesize to upload"
+        def testFile = new File(getClass().getClassLoader().getResource(fileName).path)
+        testFile = createBigUploadBinary(testFile, File.createTempDir("testUpload", "fileType"), 1024 * 1024 * desiredFileSize)
+
         buildFile << """
-            publishAppCenter.binary = "$testFile"
+            publishAppCenter.binary = "${escapedPath(testFile.path)}"
+            publishAppCenter.applicationIdentifier = "$applicationIdentifier"
         """.stripIndent()
 
         expect:
         runTasksSuccessfully("publishAppCenter")
+
+        where:
+        fileType | fileName   | applicationIdentifier        | desiredFileSize
+        "ipa"    | "test.ipa" | applicationIdentifierIos     | 160
+        "apk"    | "test.apk" | applicationIdentifierAndroid | 160
+    }
+
+    @Unroll("uploads small dummy #fileType to AppCenter successfully")
+    def "uploads artifacts"() {
+        given: "a dummy ipa binary to upload"
+        def testFile = getClass().getClassLoader().getResource(fileName).path
+        buildFile << """
+            publishAppCenter.binary = "$testFile"
+            publishAppCenter.applicationIdentifier = "$applicationIdentifier"
+        """.stripIndent()
+
+        expect:
+        runTasksSuccessfully("publishAppCenter")
+
+        where:
+        fileType | fileName   | applicationIdentifier
+        "ipa"    | "test.ipa" | applicationIdentifierIos
+        "apk"    | "test.apk" | applicationIdentifierAndroid
     }
 
     def "writes json file with uploaded version meta data"() {
@@ -67,7 +125,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
         assert !versionMeta.exists()
 
         when:
@@ -85,7 +143,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
         assert !versionMeta.exists()
 
         and: "no configured distribution groups"
@@ -115,7 +173,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
         assert !versionMeta.exists()
 
         when:
@@ -145,7 +203,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
         assert !versionMeta.exists()
 
         when:
@@ -190,7 +248,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
         assert !versionMeta.exists()
 
         when:
@@ -223,7 +281,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
         assert !versionMeta.exists()
 
         when:
@@ -261,7 +319,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
         assert !versionMeta.exists()
 
         when:
@@ -376,7 +434,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifier}.json")
+        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
         assert !versionMeta.exists()
 
         when:
@@ -393,7 +451,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
 
     void deleteDistributionGroup(String name) {
         HttpClient client = HttpClientBuilder.create().build()
-        HttpDelete request = new HttpDelete("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifier}/distribution_groups/${URLEncoder.encode(name, "UTF-8")}")
+        HttpDelete request = new HttpDelete("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifierIos}/distribution_groups/${URLEncoder.encode(name, "UTF-8")}")
 
         request.setHeader("Accept", 'application/json')
         request.setHeader("X-API-Token", apiToken)
@@ -407,7 +465,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
 
     Map<String, String> ensureDistributionGroup(String name) {
         HttpClient client = HttpClientBuilder.create().build()
-        HttpPost request = new HttpPost("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifier}/distribution_groups")
+        HttpPost request = new HttpPost("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifierIos}/distribution_groups")
 
         request.setHeader("Accept", 'application/json')
         request.setHeader("X-API-Token", apiToken)
@@ -429,7 +487,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
 
     Map<String, String> loadDistributionGroup(String name) {
         HttpClient client = HttpClientBuilder.create().build()
-        HttpGet request = new HttpGet("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifier}/distribution_groups/${name}")
+        HttpGet request = new HttpGet("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifierIos}/distribution_groups/${name}")
 
         request.setHeader("Accept", 'application/json')
         request.setHeader("X-API-Token", apiToken)
@@ -454,7 +512,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
 
     Map getRelease(String releaseId) {
         HttpClient client = HttpClientBuilder.create().build()
-        HttpGet request = new HttpGet("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifier}/releases/${releaseId}")
+        HttpGet request = new HttpGet("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifierIos}/releases/${releaseId}")
 
         request.setHeader("Accept", 'application/json')
         request.setHeader("X-API-Token", apiToken)

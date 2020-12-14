@@ -223,7 +223,7 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
 
     static String apiToken = System.env["ATLAS_APP_CENTER_INTEGRATION_API_TOKEN"]
     static String owner = System.env["ATLAS_APP_CENTER_OWNER"]
-    static String applicationIdentifier = System.env["ATLAS_APP_CENTER_INTEGRATION_APPLICATION_IDENTIFIER"]
+    static String applicationIdentifier = System.env["ATLAS_APP_CENTER_INTEGRATION_APPLICATION_IDENTIFIER_IOS"]
 
     @Unroll()
     def "task :#taskName #message on task :#dependedTask when enabled is #enabled"() {
