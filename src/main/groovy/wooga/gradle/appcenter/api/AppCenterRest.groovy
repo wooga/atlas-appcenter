@@ -199,6 +199,8 @@ class AppCenterRest {
                 throw new GradleException("unable to create release upload for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
             case 201:
                 return CreateReleaseUpload.fromResponse(response)
+            default:
+                onUnhandledResponse("Unable to create release upload", response, owner, applicationIdentifier)
         }
     }
 
@@ -219,8 +221,18 @@ class AppCenterRest {
             case 400:
                 def error = AppCenterError.fromResponse(response)
                 throw new GradleException("unable to update release upload ${uploadId} for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
+            case 200:
+                logger.info("release upload ${uploadId} for ${owner}/${applicationIdentifier} status updated")
+                break
+            default:
+                onUnhandledResponse("Unable to update release upload", response, owner, applicationIdentifier)
         }
     }
+
+    static onUnhandledResponse(String message, HttpResponse response, String owner, String applicationIdentifier) {
+        throw new GradleException("${message} [For owner(${owner}), applicationIdentifier(${applicationIdentifier})] RESPONSE STATUS CODE: ${response.statusLine.statusCode}")
+    }
+
 
     static void uploadFile(HttpClient client, CreateReleaseUpload uploadCreation, File binary) {
         logger.info("upload file ${binary.path}".toString())
@@ -318,6 +330,9 @@ class AppCenterRest {
                             sleep(1000)
                             break
                     }
+                    break
+                default:
+                    onUnhandledResponse("Unable to poll for release id '${uploadId}'", response, owner, applicationIdentifier)
             }
         }
     }
@@ -336,6 +351,8 @@ class AppCenterRest {
                 throw new GradleException("unable to update release ${releaseId} for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
             case 200:
                 return responsBody(response)
+            default:
+                onUnhandledResponse("Unable to get release id ${releaseId}", response, owner, applicationIdentifier)
         }
     }
 
