@@ -199,6 +199,10 @@ class AppCenterRest {
                 throw new GradleException("unable to create release upload for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
             case 201:
                 return CreateReleaseUpload.fromResponse(response)
+            case 429:
+                return handleRateLimit(response) {
+                    createReleaseUpload(client, owner, applicationIdentifier, apiToken, buildVersion, buildNumber)
+                }
             default:
                 onUnhandledResponse("Unable to create release upload", response, owner, applicationIdentifier)
         }
@@ -224,6 +228,10 @@ class AppCenterRest {
             case 200:
                 logger.info("release upload ${uploadId} for ${owner}/${applicationIdentifier} status updated")
                 break
+            case 429:
+                return handleRateLimit(response) {
+                    updateReleaseUpload(client, owner, applicationIdentifier, apiToken, uploadId, status)
+                }
             default:
                 onUnhandledResponse("Unable to update release upload", response, owner, applicationIdentifier)
         }
@@ -298,6 +306,21 @@ class AppCenterRest {
         }
     }
 
+    static<T> T handleRateLimit(HttpResponse response, Closure<T> handler) {
+        logger.warning("too many request send")
+        def retryHeader = response.getFirstHeader("Retry-After")
+        Integer wait = 1000 * 60 * 2
+        if(retryHeader) {
+            wait = Integer.parseInt(retryHeader.getValue())
+        } else {
+            logger.warning("no [Retry-After] header found in response. Use default wait time.")
+        }
+
+        logger.info("wait ${wait / 1000} seconds and try again")
+        sleep(wait)
+        handler.call()
+    }
+
     static String pollForReleaseId(HttpClient client, String owner, String applicationIdentifier, String apiToken, String uploadId) {
         logger.info("poll for releaseId of upload ${uploadId} for ${owner}/${applicationIdentifier}".toString())
         HttpGet request = new HttpGet(getUploadReleasesUri(owner, applicationIdentifier, uploadId))
@@ -331,6 +354,10 @@ class AppCenterRest {
                             break
                     }
                     break
+                case 429:
+                    return handleRateLimit(response) {
+                        pollForReleaseId(client, owner, applicationIdentifier, apiToken, uploadId)
+                    }
                 default:
                     onUnhandledResponse("Unable to poll for release id '${uploadId}'", response, owner, applicationIdentifier)
             }
@@ -351,6 +378,10 @@ class AppCenterRest {
                 throw new GradleException("unable to update release ${releaseId} for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
             case 200:
                 return responsBody(response)
+            case 429:
+                return handleRateLimit(response) {
+                    getRelease(client, owner, applicationIdentifier, apiToken, releaseId)
+                }
             default:
                 onUnhandledResponse("Unable to get release id ${releaseId}", response, owner, applicationIdentifier)
         }
@@ -385,8 +416,21 @@ class AppCenterRest {
 
         HttpResponse response = client.execute(request)
 
-        if (response.statusLine.statusCode != 200) {
-            throw new GradleException("unable to distribute release ${releaseId} for ${owner}/${applicationIdentifier}")
+        switch (response.statusLine.statusCode) {
+            case 404:
+            case 400:
+                def error = AppCenterError.fromResponse(response)
+                throw new GradleException("unable to distribute release ${releaseId} for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
+            case 200:
+                logger.info("distribute release ${releaseId} for ${owner}/${applicationIdentifier} successfull")
+                break
+            case 429:
+                handleRateLimit(response) {
+                    distribute(client, owner, applicationIdentifier, apiToken, releaseId, destinations, buildInfo, releaseNotes)
+                }
+                break
+            default:
+                onUnhandledResponse("unable to distribute release ${releaseId}", response, owner, applicationIdentifier)
         }
     }
 }
