@@ -13,7 +13,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import wooga.gradle.appcenter.api.AppCenterBuildInfo
-import wooga.gradle.appcenter.api.AppCenterRest
+import wooga.gradle.appcenter.api.AppCenterReleaseUploader
 import wooga.gradle.compat.ProjectLayout
 
 import static org.gradle.util.ConfigureUtil.configureUsing
@@ -198,34 +198,26 @@ class AppCenterUploadTask extends DefaultTask {
 
     @TaskAction
     protected void upload() {
+
         HttpClient client = HttpClientBuilder.create().build()
-        String owner = owner.get()
-        String applicationIdentifier = applicationIdentifier.get()
-        String apiToken = apiToken.get()
-        String buildVersion = buildVersion.getOrNull()
-        String buildNumber = buildNumber.getOrNull()
-        File binary = binary.get().asFile
-        List<Map<String, String>> destinations = destinations.getOrElse([])
 
-        String releaseNotes = releaseNotes.getOrElse("")
+        AppCenterReleaseUploader uploader = new AppCenterReleaseUploader(client,
+                                                                         owner.get(),
+                                                                         applicationIdentifier.get(),
+                                                                         apiToken.get())
 
-        def releaseUpload = AppCenterRest.createReleaseUpload(client, owner, applicationIdentifier, apiToken, buildVersion, buildNumber)
+        AppCenterReleaseUploader.UploadArguments args = new AppCenterReleaseUploader.UploadArguments()
+        args.buildNumber = buildNumber.getOrNull()
+        args.buildVersion = buildVersion.getOrNull()
+        args.binary = binary.get().asFile
+        args.releaseNotes =  releaseNotes.getOrElse("")
+        args.destinations = destinations.getOrElse([])
+        args.buildInfo = getBuildInfo()
 
-        AppCenterRest.uploadFile(client, releaseUpload, binary)
-        AppCenterRest.updateReleaseUpload(client, owner, applicationIdentifier, apiToken, releaseUpload.id, AppCenterRest.ReleaseUploadStatus.uploadFinished)
-
-        def releaseId = AppCenterRest.pollForReleaseId(client, owner, applicationIdentifier, apiToken, releaseUpload.id)
-        def release = AppCenterRest.getRelease(client, owner, applicationIdentifier, apiToken, releaseId)
-
-        String downloadUrl = release["download_url"].toString()
-        String installUrl = release["install_url"].toString()
-
-        AppCenterRest.distribute(client, owner, applicationIdentifier, apiToken, releaseId, destinations, getBuildInfo(), releaseNotes)
-
-        logger.info("published to AppCenter release: ${releaseId}")
-        logger.info("download_url: ${downloadUrl}")
-        logger.info("install_url: ${installUrl}")
-
-        uploadVersionMetaData.get().asFile << JsonOutput.prettyPrint(JsonOutput.toJson(release))
+        AppCenterReleaseUploader.UploadResult result = uploader.upload(args)
+        logger.info("published to AppCenter release: ${result.releaseID}")
+        logger.info("download_url: ${result.downloadUrl}")
+        logger.info("install_url: ${result.installUrl}")
+        uploadVersionMetaData.get().asFile << JsonOutput.prettyPrint(JsonOutput.toJson(result.release))
     }
 }
