@@ -2,6 +2,7 @@ package wooga.gradle.appcenter.tasks
 
 import groovy.json.JsonOutput
 import org.apache.http.client.HttpClient
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.impl.client.HttpClientBuilder
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
@@ -14,6 +15,7 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import wooga.gradle.appcenter.api.AppCenterBuildInfo
 import wooga.gradle.appcenter.api.AppCenterReleaseUploader
+import wooga.gradle.appcenter.api.AppCenterRetryStrategy
 import wooga.gradle.compat.ProjectLayout
 
 import static org.gradle.util.ConfigureUtil.configureUsing
@@ -198,23 +200,35 @@ class AppCenterUploadTask extends DefaultTask {
 
     @TaskAction
     protected void upload() {
+        int timeout = 30
+        RequestConfig config = RequestConfig.custom()
+                .setConnectTimeout(timeout * 1000)
+                .setConnectionRequestTimeout(timeout * 1000)
+                .setSocketTimeout(timeout * 1000).build()
 
-        HttpClient client = HttpClientBuilder.create().build()
+        HttpClient client = HttpClientBuilder.create()
+                .setDefaultRequestConfig(config)
+                .setServiceUnavailableRetryStrategy(new AppCenterRetryStrategy(retryCount.get(), retryTimeout.get().toInteger()))
+                .build()
 
         AppCenterReleaseUploader uploader = new AppCenterReleaseUploader(client,
-                                                                         owner.get(),
-                                                                         applicationIdentifier.get(),
-                                                                         apiToken.get())
+                owner.get(),
+                applicationIdentifier.get(),
+                apiToken.get())
 
-        AppCenterReleaseUploader.UploadArguments args = new AppCenterReleaseUploader.UploadArguments()
-        args.buildNumber = buildNumber.getOrNull()
-        args.buildVersion = buildVersion.getOrNull()
-        args.binary = binary.get().asFile
-        args.releaseNotes =  releaseNotes.getOrElse("")
-        args.destinations = destinations.getOrElse([])
-        args.buildInfo = getBuildInfo()
+        AppCenterReleaseUploader.DistributionSettings distributionSettings = uploader.distributionSettings
+        AppCenterReleaseUploader.UploadVersion version = uploader.version
 
-        AppCenterReleaseUploader.UploadResult result = uploader.upload(args)
+        uploader.retrySettings.timeout = retryTimeout.get()
+        uploader.retrySettings.maxRetries = retryCount.get()
+        version.buildNumber = buildNumber.getOrNull()
+        version.buildVersion = buildVersion.getOrNull()
+
+        distributionSettings.releaseNotes = releaseNotes.getOrElse("")
+        distributionSettings.destinations = destinations.getOrElse([])
+        distributionSettings.buildInfo = getBuildInfo()
+
+        AppCenterReleaseUploader.UploadResult result = uploader.upload(binary.get().asFile)
         logger.info("published to AppCenter release: ${result.releaseID}")
         logger.info("download_url: ${result.downloadUrl}")
         logger.info("install_url: ${result.installUrl}")

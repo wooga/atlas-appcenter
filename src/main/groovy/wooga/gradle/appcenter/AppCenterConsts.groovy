@@ -37,11 +37,11 @@ class AppCenterConsts {
     static String PUBLISH_ENABLED_OPTION = "appCenter.publishEnabled"
     static String PUBLISH_ENABLED_ENV_VAR = "APP_CENTER_PUBLISH_ENABLED"
 
-    static Long defaultRetryTimeout = 1000 * 5
+    static Long defaultRetryTimeout = 1000 * 60
     static String RETRY_TIMEOUT_OPTION = "appCenter.retryTimeout"
     static String RETRY_TIMEOUT_ENV_VAR = "APP_CENTER_RETRY_TIMEOUT"
 
-    static Integer defaultRetryCount = 3
+    static Integer defaultRetryCount = 30
     static String RETRY_COUNT_OPTION = "appCenter.retryCount"
     static String RETRY_COUNT_ENV_VAR = "APP_CENTER_RETRY_COUNT"
 }
