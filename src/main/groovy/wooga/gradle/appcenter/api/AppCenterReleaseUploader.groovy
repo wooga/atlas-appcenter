@@ -24,13 +24,20 @@ class AppCenterReleaseUploader {
         uploadStarted, uploadFinished, readyToBePublished, malwareDetected, error
     }
 
-    static class UploadArguments {
+    static class UploadVersion {
         String buildVersion
         String buildNumber
-        File binary
-        List<Map<String, String>> destinations
-        String releaseNotes
-        AppCenterBuildInfo buildInfo
+    }
+
+    static class DistributionSettings {
+        List<Map<String, String>> destinations = []
+        String releaseNotes = ""
+        AppCenterBuildInfo buildInfo = new AppCenterBuildInfo()
+    }
+
+    static class RetrySettings {
+        Long timeout = DEFAULT_WAIT_RATE_LIMIT_DURATION
+        Integer maxRetries = 10
     }
 
     static class UploadResult {
@@ -113,12 +120,18 @@ class AppCenterReleaseUploader {
 
     static Logger logger = Logger.getLogger(AppCenterRest.name)
     static API_BASE_URL = AppCenterRest.API_BASE_URL
-    static final Integer DEFAULT_WAIT_RATE_LIMIT_DURATION = 1000 * 60 * 2
+    static final Integer DEFAULT_WAIT_RATE_LIMIT_DURATION = 1000 * 60
 
     final HttpClient client
     final String owner
     final String applicationIdentifier
     final String apiToken
+
+    private retryCounter = 0
+
+    final DistributionSettings distributionSettings = new DistributionSettings()
+    final UploadVersion version = new UploadVersion()
+    final RetrySettings retrySettings = new RetrySettings()
 
     AppCenterReleaseUploader(HttpClient client,
                              String owner,
@@ -130,22 +143,21 @@ class AppCenterReleaseUploader {
         this.apiToken = apiToken
     }
 
-    UploadResult upload(UploadArguments args) {
-
-        CreateReleaseUpload releaseUpload = createReleaseUpload(args.buildVersion, args.buildNumber)
-        uploadFile(releaseUpload, args.binary)
+    UploadResult upload(File binary) {
+        retryCounter = 0
+        CreateReleaseUpload releaseUpload = createReleaseUpload(version)
+        uploadFile(releaseUpload, binary)
         updateReleaseUpload(releaseUpload.id, ReleaseUploadStatus.uploadFinished)
 
         String releaseId = pollForReleaseId(releaseUpload.id)
         Map release = getRelease(releaseId)
-        distribute(releaseId, args.destinations, args.releaseNotes, args.buildInfo)
+        distribute(releaseId, distributionSettings)
 
         UploadResult result = new UploadResult(release)
         return result
-
     }
 
-    private CreateReleaseUpload createReleaseUpload(String buildVersion, String buildNumber) {
+    private CreateReleaseUpload createReleaseUpload(UploadVersion version) {
 
         logger.info("create new release upload for ${owner}/${applicationIdentifier}".toString())
 
@@ -154,12 +166,12 @@ class AppCenterReleaseUploader {
 
         def body = [:]
 
-        if (buildVersion) {
-            body["build_version"] = buildVersion
+        if (version.buildVersion && !version.buildVersion.isEmpty()) {
+            body["build_version"] = version.buildVersion
         }
 
-        if (buildNumber) {
-            body["build_number"] = buildNumber
+        if (version.buildNumber && !version.buildNumber.isEmpty()) {
+            body["build_number"] = version.buildNumber
         }
 
         request.setEntity(new StringEntity(JsonOutput.toJson(body), ContentType.APPLICATION_JSON))
@@ -172,10 +184,6 @@ class AppCenterReleaseUploader {
                 throw new GradleException("unable to create release upload for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
             case 201:
                 return CreateReleaseUpload.fromResponse(response)
-            case 429:
-                return handleRateLimit(response) {
-                    createReleaseUpload(buildVersion, buildNumber)
-                }
             default:
                 onUnhandledResponse("Unable to create release upload", response)
         }
@@ -201,10 +209,6 @@ class AppCenterReleaseUploader {
             case 200:
                 logger.info("release upload ${uploadId} for ${owner}/${applicationIdentifier} status updated")
                 break
-            case 429:
-                return handleRateLimit(response) {
-                    updateReleaseUpload(uploadId, status)
-                }
             default:
                 onUnhandledResponse("Unable to update release upload", response)
         }
@@ -215,9 +219,8 @@ class AppCenterReleaseUploader {
         HttpGet request = new HttpGet(getUploadReleasesUri(uploadId))
         setHeaders(request)
 
-        while (true) {
+        while(true) {
             HttpResponse response = client.execute(request)
-
             switch (response.statusLine.statusCode) {
                 case 404:
                 case 400:
@@ -237,13 +240,9 @@ class AppCenterReleaseUploader {
                         case ReleaseUploadStatus.malwareDetected:
                             throw new GradleException("Error fetching release: Malware Detected")
                             break
-                        case 429:
-                            return handleRateLimit(response) {
-                                pollForReleaseId(uploadId)
-                            }
                         default:
                             logger.info("wait and poll for releaseId again")
-                            sleep(1000)
+                            sleep(2000)
                             break
                     }
                     break
@@ -259,7 +258,6 @@ class AppCenterReleaseUploader {
         setHeaders(request)
 
         HttpResponse response = client.execute(request)
-
         switch (response.statusLine.statusCode) {
             case 404:
             case 400:
@@ -267,23 +265,19 @@ class AppCenterReleaseUploader {
                 throw new GradleException("unable to update release ${releaseId} for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
             case 200:
                 return getResponseBody(response)
-            case 429:
-                return handleRateLimit(response) {
-                    getRelease(releaseId)
-                }
             default:
                 onUnhandledResponse("Unable to get release id ${releaseId}", response)
         }
     }
 
-    private void distribute(String releaseId, List<Map<String, String>> destinations, String releaseNotes, AppCenterBuildInfo buildInfo) {
+    private void distribute(String releaseId, DistributionSettings settings) {
         logger.info("distribute release ${releaseId} for ${owner}/${applicationIdentifier}".toString())
 
         HttpPatch request = new HttpPatch(getReleasesUri(releaseId))
         setHeaders(request)
 
         def build = [:]
-
+        def buildInfo = settings.buildInfo
         if (buildInfo.branchName && !buildInfo.branchName.empty) {
             build["branch_name"] = buildInfo.branchName
         }
@@ -296,7 +290,7 @@ class AppCenterReleaseUploader {
             build["commit_message"] = buildInfo.commitMessage
         }
 
-        def body = ["destinations": destinations, "build": build, "release_notes": releaseNotes]
+        def body = ["destinations": settings.destinations, "build": build, "release_notes": settings.releaseNotes]
 
         logger.fine("request body:")
         logger.fine(body.toString())
@@ -304,7 +298,6 @@ class AppCenterReleaseUploader {
         request.setEntity(new StringEntity(JsonOutput.toJson(body), ContentType.APPLICATION_JSON))
 
         HttpResponse response = client.execute(request)
-
         switch (response.statusLine.statusCode) {
             case 404:
             case 400:
@@ -313,13 +306,8 @@ class AppCenterReleaseUploader {
             case 200:
                 logger.info("distribute release ${releaseId} for ${owner}/${applicationIdentifier} successfull")
                 break
-            case 429:
-                handleRateLimit(response) {
-                    distribute(releaseId, destinations, releaseNotes, buildInfo)
-                }
-                break
             default:
-                onUnhandledResponse("unable to distribute release ${releaseId}")
+                onUnhandledResponse("unable to distribute release ${releaseId}", response)
         }
     }
 
@@ -430,20 +418,4 @@ class AppCenterReleaseUploader {
         builder.setParameter("token", uploadCreation.token)
         builder.build()
     }
-
-    static<T> T handleRateLimit(HttpResponse response, Closure<T> handler) {
-        logger.warning("too many request send")
-        logger.warning(response.toString())
-        def retryHeader = response.getFirstHeader("Retry-After")
-        Integer wait = DEFAULT_WAIT_RATE_LIMIT_DURATION
-        if(retryHeader) {
-            wait = Integer.parseInt(retryHeader.getValue())
-        } else {
-            logger.warning("no [Retry-After] header found in response. Use default wait time.")
-        }
-        logger.info("wait ${wait / 1000} seconds and try again")
-        sleep(wait)
-        handler.call()
-    }
-
 }

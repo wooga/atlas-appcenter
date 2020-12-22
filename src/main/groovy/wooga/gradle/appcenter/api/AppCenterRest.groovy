@@ -1,17 +1,7 @@
 package wooga.gradle.appcenter.api
 
-
 import groovy.json.JsonSlurper
-import org.apache.commons.io.FilenameUtils
 import org.apache.http.HttpResponse
-import org.apache.http.client.HttpClient
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.client.utils.URIBuilder
-import org.apache.http.entity.ByteArrayEntity
-import org.apache.http.entity.ContentType
-import org.gradle.api.GradleException
-
-import java.util.logging.Logger
 
 class AppCenterRest {
 
@@ -55,7 +45,7 @@ class AppCenterRest {
         }
     }
 
-    static final API_BASE_URL = "https://api.appcenter.ms/v0.1/apps/"
+    static final API_BASE_URL = "https://api.appcenter.ms/v0.1/apps"
 
     static Map getResponseBody(HttpResponse response) {
         def jsonSlurper = new JsonSlurper()
