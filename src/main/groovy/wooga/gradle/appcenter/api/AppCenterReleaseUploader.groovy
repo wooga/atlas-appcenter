@@ -242,7 +242,7 @@ class AppCenterReleaseUploader {
                             break
                         default:
                             logger.info("wait and poll for releaseId again")
-                            sleep(2000)
+                            sleep(4000)
                             break
                     }
                     break
