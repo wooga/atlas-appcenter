@@ -219,8 +219,6 @@ class AppCenterUploadTask extends DefaultTask {
         AppCenterReleaseUploader.DistributionSettings distributionSettings = uploader.distributionSettings
         AppCenterReleaseUploader.UploadVersion version = uploader.version
 
-        uploader.retrySettings.timeout = retryTimeout.get()
-        uploader.retrySettings.maxRetries = retryCount.get()
         version.buildNumber = buildNumber.getOrNull()
         version.buildVersion = buildVersion.getOrNull()
 

@@ -12,8 +12,10 @@ import org.apache.http.client.utils.URIBuilder
 import org.apache.http.entity.ByteArrayEntity
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
-import org.gradle.api.GradleException
 import wooga.gradle.appcenter.api.AppCenterRest.AppCenterError
+import wooga.gradle.appcenter.error.AppCenterAppExtractionException
+import wooga.gradle.appcenter.error.AppCenterMalwareDetectionException
+import wooga.gradle.appcenter.error.AppCenterUploadException
 
 import java.util.logging.Logger
 import static wooga.gradle.appcenter.api.AppCenterRest.getResponseBody
@@ -33,11 +35,6 @@ class AppCenterReleaseUploader {
         List<Map<String, String>> destinations = []
         String releaseNotes = ""
         AppCenterBuildInfo buildInfo = new AppCenterBuildInfo()
-    }
-
-    static class RetrySettings {
-        Long timeout = DEFAULT_WAIT_RATE_LIMIT_DURATION
-        Integer maxRetries = 10
     }
 
     static class UploadResult {
@@ -120,7 +117,6 @@ class AppCenterReleaseUploader {
 
     static Logger logger = Logger.getLogger(AppCenterRest.name)
     static API_BASE_URL = AppCenterRest.API_BASE_URL
-    static final Integer DEFAULT_WAIT_RATE_LIMIT_DURATION = 1000 * 60
 
     final HttpClient client
     final String owner
@@ -131,7 +127,6 @@ class AppCenterReleaseUploader {
 
     final DistributionSettings distributionSettings = new DistributionSettings()
     final UploadVersion version = new UploadVersion()
-    final RetrySettings retrySettings = new RetrySettings()
 
     AppCenterReleaseUploader(HttpClient client,
                              String owner,
@@ -144,12 +139,21 @@ class AppCenterReleaseUploader {
     }
 
     UploadResult upload(File binary) {
-        retryCounter = 0
         CreateReleaseUpload releaseUpload = createReleaseUpload(version)
         uploadFile(releaseUpload, binary)
         updateReleaseUpload(releaseUpload.id, ReleaseUploadStatus.uploadFinished)
+        String releaseId
 
-        String releaseId = pollForReleaseId(releaseUpload.id)
+        try {
+            releaseId = pollForReleaseId(releaseUpload.id)
+        } catch (AppCenterAppExtractionException e) {
+            if (retryCounter <= 3) {
+                retryCounter += 1
+                return upload(binary)
+            }
+            throw e
+        }
+
         Map release = getRelease(releaseId)
         distribute(releaseId, distributionSettings)
 
@@ -181,7 +185,7 @@ class AppCenterReleaseUploader {
             case 404:
             case 400:
                 def error = AppCenterError.fromResponse(response)
-                throw new GradleException("unable to create release upload for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
+                throw new AppCenterUploadException("unable to create release upload for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
             case 201:
                 return CreateReleaseUpload.fromResponse(response)
             default:
@@ -205,7 +209,7 @@ class AppCenterReleaseUploader {
             case 404:
             case 400:
                 def error = AppCenterError.fromResponse(response)
-                throw new GradleException("unable to update release upload ${uploadId} for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
+                throw new AppCenterUploadException("unable to update release upload ${uploadId} for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
             case 200:
                 logger.info("release upload ${uploadId} for ${owner}/${applicationIdentifier} status updated")
                 break
@@ -219,13 +223,13 @@ class AppCenterReleaseUploader {
         HttpGet request = new HttpGet(getUploadReleasesUri(uploadId))
         setHeaders(request)
 
-        while(true) {
+        while (true) {
             HttpResponse response = client.execute(request)
             switch (response.statusLine.statusCode) {
                 case 404:
                 case 400:
                     def error = AppCenterError.fromResponse(response)
-                    throw new GradleException("unable to poll release id of upload ${uploadId} ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
+                    throw new AppCenterUploadException("unable to poll release id of upload ${uploadId} ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
                 case 200:
                     ReleaseUpload upload = ReleaseUpload.fromResponse(response)
 
@@ -235,10 +239,13 @@ class AppCenterReleaseUploader {
                             logger.info("fetched releaseId ${upload.releaseDistinctId}")
                             return upload.releaseDistinctId
                         case ReleaseUploadStatus.error:
-                            throw new GradleException("Error fetching release: ${upload.errorDetails}")
+                            if (upload.errorDetails.contains("A problem occured while extracting your app.")) {
+                                throw new AppCenterAppExtractionException(upload.errorDetails)
+                            }
+                            throw new AppCenterUploadException("Error fetching release: ${upload.errorDetails}")
                             break
                         case ReleaseUploadStatus.malwareDetected:
-                            throw new GradleException("Error fetching release: Malware Detected")
+                            throw new AppCenterMalwareDetectionException("Error fetching release: Malware Detected")
                             break
                         default:
                             logger.info("wait and poll for releaseId again")
@@ -262,7 +269,7 @@ class AppCenterReleaseUploader {
             case 404:
             case 400:
                 def error = AppCenterError.fromResponse(response)
-                throw new GradleException("unable to update release ${releaseId} for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
+                throw new AppCenterUploadException("unable to update release ${releaseId} for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
             case 200:
                 return getResponseBody(response)
             default:
@@ -302,7 +309,7 @@ class AppCenterReleaseUploader {
             case 404:
             case 400:
                 def error = AppCenterError.fromResponse(response)
-                throw new GradleException("unable to distribute release ${releaseId} for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
+                throw new AppCenterUploadException("unable to distribute release ${releaseId} for ${owner}/${applicationIdentifier}: ${error.code} ${error.message}")
             case 200:
                 logger.info("distribute release ${releaseId} for ${owner}/${applicationIdentifier} successfull")
                 break
@@ -331,7 +338,7 @@ class AppCenterReleaseUploader {
             return chunkSize
         }
 
-        throw new GradleException("Set metadata didn't return chunk size")
+        throw new AppCenterUploadException("Set metadata didn't return chunk size")
     }
 
     private void uploadChunks(CreateReleaseUpload uploadCreation, File binary, Integer chunksize) {
@@ -351,10 +358,10 @@ class AppCenterReleaseUploader {
                     logger.info("upload chunk ${blockNumber} succesfull".toString())
                     blockNumber = blockNumber + 1
                 } else {
-                    throw new GradleException("Error while uploading chunk")
+                    throw new AppCenterUploadException("Error while uploading chunk")
                 }
             } else {
-                throw new GradleException("Error while uploading chunk")
+                throw new AppCenterUploadException("Error while uploading chunk")
             }
         }
         logger.info("upload file complete".toString())
@@ -366,12 +373,12 @@ class AppCenterReleaseUploader {
         HttpResponse response = client.execute(request)
 
         if (response.statusLine.statusCode != 200) {
-            throw new GradleException("Failed to finish upload")
+            throw new AppCenterUploadException("Failed to finish upload")
         }
 
         def responseBody = getResponseBody(response)
         if (responseBody['error'] == true) {
-            throw new GradleException("unable to finish upload ${responseBody['message']}")
+            throw new AppCenterUploadException("unable to finish upload ${responseBody['message']}")
         }
     }
 
@@ -393,7 +400,7 @@ class AppCenterReleaseUploader {
     private onUnhandledResponse(String message, HttpResponse response) {
         logger.severe(message)
         logger.severe(response.toString())
-        throw new GradleException("${message} [For owner(${owner}), applicationIdentifier(${applicationIdentifier})] RESPONSE STATUS CODE: ${response.statusLine.statusCode}")
+        throw new AppCenterUploadException("${message} [For owner(${owner}), applicationIdentifier(${applicationIdentifier})] RESPONSE STATUS CODE: ${response.statusLine.statusCode}")
     }
 
     private static URI getUploadSetMetadataUri(CreateReleaseUpload uploadCreation, File binary) {

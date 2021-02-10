@@ -28,7 +28,7 @@ class AppCenterRetryStrategy implements ServiceUnavailableRetryStrategy {
     }
 
     AppCenterRetryStrategy() {
-        this(30, 1000 * 60);
+        this(30, 1000 * 10);
     }
 
     @Override
