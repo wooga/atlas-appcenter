@@ -8,7 +8,10 @@ class AppCenterUploadException extends Exception {
 
 @InheritConstructors
 class AppCenterAppExtractionException extends Exception {
+}
 
+@InheritConstructors
+class AppCenterAppUploadServerErrorException extends Exception {
 }
 
 @InheritConstructors
