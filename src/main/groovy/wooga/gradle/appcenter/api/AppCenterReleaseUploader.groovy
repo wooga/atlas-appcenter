@@ -14,6 +14,7 @@ import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
 import wooga.gradle.appcenter.api.AppCenterRest.AppCenterError
 import wooga.gradle.appcenter.error.AppCenterAppExtractionException
+import wooga.gradle.appcenter.error.AppCenterAppUploadServerErrorException
 import wooga.gradle.appcenter.error.AppCenterMalwareDetectionException
 import wooga.gradle.appcenter.error.AppCenterUploadException
 
@@ -152,6 +153,12 @@ class AppCenterReleaseUploader {
                 return upload(binary)
             }
             throw e
+        } catch (AppCenterAppUploadServerErrorException e) {
+            if (retryCounter <= 3) {
+                retryCounter += 1
+                return upload(binary)
+            }
+            throw e
         }
 
         Map release = getRelease(releaseId)
@@ -253,6 +260,8 @@ class AppCenterReleaseUploader {
                             break
                     }
                     break
+                case 500..600:
+                    throw new AppCenterAppUploadServerErrorException("unable to poll release id of upload ${uploadId} ${owner}/${applicationIdentifier}: server error ${response.toString()}")
                 default:
                     onUnhandledResponse("Unable to poll for release id '${uploadId}'", response)
             }
