@@ -27,7 +27,7 @@ pluginBundle {
     tags = ['AppCenter']
 
     plugins {
-        unity {
+        appcenter {
             id = 'net.wooga.appcenter'
             displayName = 'Gradle AppCenter plugin'
             description = 'This plugin provides tasks for uploading a build to AppCenter'
