@@ -1,11 +1,11 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2018-2021 Wooga GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *         http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,13 +45,13 @@ class AppCenterPlugin implements Plugin<Project> {
         tasks.withType(AppCenterUploadTask, new Action<AppCenterUploadTask>() {
             @Override
             void execute(AppCenterUploadTask t) {
-                t.buildVersion.set(project.providers.provider({ project.version.toString() }))
+                t.buildVersion.convention(project.providers.provider({ project.version.toString() }))
                 t.destinations.set(extension.defaultDestinations)
-                t.applicationIdentifier.set(extension.applicationIdentifier)
-                t.apiToken.set(extension.apiToken)
-                t.owner.set(extension.owner)
-                t.retryCount.set(extension.retryCount)
-                t.retryTimeout.set(extension.retryTimeout)
+                t.applicationIdentifier.convention(extension.applicationIdentifier)
+                t.apiToken.convention(extension.apiToken)
+                t.owner.convention(extension.owner)
+                t.retryCount.convention(extension.retryCount)
+                t.retryTimeout.convention(extension.retryTimeout)
         }})
 
         project.afterEvaluate(new Action<Project>() {
