@@ -241,7 +241,7 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary = "$testFile"
+            publishAppCenter.binary = file("$testFile")
         """.stripIndent()
 
         when:

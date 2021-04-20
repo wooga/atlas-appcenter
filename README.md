@@ -16,7 +16,7 @@ This plugin is work in progress.
 **build.gradle**
 ```groovy
 plugins {
-    id 'net.wooga.appcenter' version '0.7.0'
+    id 'net.wooga.appcenter' version '1.0.0'
 }
 ```
 
@@ -56,32 +56,28 @@ Gradle and Java Compatibility
 Built with Oracle JDK7
 Tested with Oracle JDK8
 
-| Gradle Version  | Works     |
-| :-------------: | :-------: |
-| 4.0             | `v0.6.0`  |
-| 4.1             | `v0.6.0`  |
-| 4.2             | `v0.6.0`  |
-| 4.3             | `v0.6.0`  |
-| 4.4             | ![yes]_*_ |
-| 4.5             | ![yes]_*_ |
-| 4.6             | ![yes]_*_ |
-| 4.6             | ![yes]_*_ |
-| 4.7             | ![yes]_*_ |
-| 4.8             | ![yes]_*_ |
-| 4.9             | ![yes]_*_ |
-| 4.10.2          | ![yes]    |
-| 5.0             | ![yes]    |
-| 5.1             | ![yes]    |
-| 5.2             | ![yes]    |
-| 5.3             | ![yes]    |
-| 5.4             | ![yes]    |
-| 5.5             | ![yes]    |
-| 5.6.4           | ![yes]    |
-| 6.0             | ![yes]    |
-| 6.1             | ![yes]    |
-| 6.2             | ![yes]    |
-| 6.3             | ![yes]    |
-| 6.4             | ![yes]    |
+| Gradle Version  | Works  |
+| :-------------: | :----: |
+| < 5.0           | ![no]  |
+| 5.0             | ![no]  |
+| 5.1             | ![yes] |
+| 5.2             | ![yes] |
+| 5.3             | ![yes] |
+| 5.4             | ![yes] |
+| 5.5             | ![yes] |
+| 5.6             | ![yes] |
+| 5.6             | ![yes] |
+| 6.0             | ![yes] |
+| 6.1             | ![yes] |
+| 6.2             | ![yes] |
+| 6.3             | ![yes] |
+| 6.4             | ![yes] |
+| 6.5             | ![yes] |
+| 6.6             | ![yes] |
+| 6.6             | ![yes] |
+| 6.7             | ![yes] |
+| 6.8             | ![yes] |
+| 7.0             | ![yes] |
 
 > (*) Setting multiple distribution groups via the extionsion `defaultDestination` or in the publish task `destination` is not supported.
 > Either use the setter `setDefaultDestination`/`setDestination` or invoke `defaultDestination`/`destination` multiple times with a single group
@@ -89,7 +85,7 @@ Tested with Oracle JDK8
 LICENSE
 =======
 
-Copyright 2017 Wooga GmbH
+Copyright 2018-2021 Wooga GmbH
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -104,12 +100,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 <!-- Links -->
-[unity]:                https://unity3d.com/ "Unity 3D"
-[unity_cmd]:            https://docs.unity3d.com/Manual/CommandLineArguments.html
 [gradle]:               https://gradle.org/ "Gradle"
 [gradle_finalizedBy]:   https://docs.gradle.org/3.5/dsl/org.gradle.api.Task.html#org.gradle.api.Task:finalizedBy
 [gradle_dependsOn]:     https://docs.gradle.org/3.5/dsl/org.gradle.api.Task.html#org.gradle.api.Task:dependsOn
 
-[yes]:                  https://atlas-resources.wooga.com/icons/icon_check.svg "yes"
-[no]:                   https://atlas-resources.wooga.com/icons/icon_uncheck.svg "no"
+[yes]:                  https://resources.atlas.wooga.com/icons/icon_check.svg "yes"
+[no]:                   https://resources.atlas.wooga.com/icons/icon_uncheck.svg "no"
 

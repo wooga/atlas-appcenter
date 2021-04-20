@@ -86,8 +86,8 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         testFile = createBigUploadBinary(testFile, File.createTempDir("testUpload", "fileType"), 1024 * 1024 * desiredFileSize)
 
         buildFile << """
-            publishAppCenter.binary = "${escapedPath(testFile.path)}"
-            publishAppCenter.applicationIdentifier = "$applicationIdentifier"
+            publishAppCenter.binary.set(file("${escapedPath(testFile.path)}"))
+            publishAppCenter.applicationIdentifier.set("$applicationIdentifier")
         """.stripIndent()
 
         expect:
@@ -104,8 +104,8 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         given: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource(fileName).path
         buildFile << """
-            publishAppCenter.binary = "$testFile"
-            publishAppCenter.applicationIdentifier = "$applicationIdentifier"
+            publishAppCenter.binary.set(file("$testFile"))
+            publishAppCenter.applicationIdentifier.set("$applicationIdentifier")
         """.stripIndent()
 
         expect:
@@ -121,7 +121,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         given: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary = "$testFile"
+            publishAppCenter.binary.set(file("$testFile"))
         """.stripIndent()
 
         and: "a future version meta file"
@@ -139,7 +139,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         given: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary = "$testFile"
+            publishAppCenter.binary.set(file("$testFile"))
         """.stripIndent()
 
         and: "a future version meta file"
@@ -169,7 +169,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary = "$testFile"
+            publishAppCenter.binary.set(file("$testFile"))
         """.stripIndent()
 
         and: "a future version meta file"
@@ -199,7 +199,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary = "$testFile"
+            publishAppCenter.binary.set(file("$testFile"))
         """.stripIndent()
 
         and: "a future version meta file"
@@ -244,7 +244,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary = "$testFile"
+            publishAppCenter.binary.set(file("$testFile"))
         """.stripIndent()
 
         and: "a future version meta file"
@@ -277,7 +277,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary = "$testFile"
+            publishAppCenter.binary.set(file("$testFile"))
         """.stripIndent()
 
         and: "a future version meta file"
@@ -315,7 +315,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary = "$testFile"
+            publishAppCenter.binary.set(file("$testFile"))
         """.stripIndent()
 
         and: "a future version meta file"
@@ -375,45 +375,35 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
 
         where:
         property                | method                      | rawValue                     | type
-        "apiToken"              | "apiToken"                  | "testToken1"                 | "String"
         "apiToken"              | "apiToken.set"              | "testToken2"                 | "String"
         "apiToken"              | "apiToken.set"              | "testToken3"                 | "Provider<String>"
         "apiToken"              | "setApiToken"               | "testToken4"                 | "String"
         "apiToken"              | "setApiToken"               | "testToken5"                 | "Provider<String>"
-        "owner"                 | "owner"                     | "owner1"                     | "String"
         "owner"                 | "owner.set"                 | "owner2"                     | "String"
         "owner"                 | "owner.set"                 | "owner3"                     | "Provider<String>"
         "owner"                 | "setOwner"                  | "owner4"                     | "String"
         "owner"                 | "setOwner"                  | "owner5"                     | "Provider<String>"
-        "buildVersion"          | "buildVersion"              | "buildVersion1"              | "String"
         "buildVersion"          | "buildVersion.set"          | "buildVersion2"              | "String"
         "buildVersion"          | "buildVersion.set"          | "buildVersion3"              | "Provider<String>"
         "buildVersion"          | "setBuildVersion"           | "buildVersion4"              | "String"
         "buildVersion"          | "setBuildVersion"           | "buildVersion5"              | "Provider<String>"
-        "applicationIdentifier" | "applicationIdentifier"     | "applicationIdentifier1"     | "String"
         "applicationIdentifier" | "applicationIdentifier.set" | "applicationIdentifier2"     | "String"
         "applicationIdentifier" | "applicationIdentifier.set" | "applicationIdentifier3"     | "Provider<String>"
         "applicationIdentifier" | "setApplicationIdentifier"  | "applicationIdentifier4"     | "String"
         "applicationIdentifier" | "setApplicationIdentifier"  | "applicationIdentifier5"     | "Provider<String>"
-        "releaseNotes"          | "releaseNotes"              | "releaseNotes1"              | "String"
         "releaseNotes"          | "releaseNotes.set"          | "releaseNotes2"              | "String"
         "releaseNotes"          | "releaseNotes.set"          | "releaseNotes3"              | "Provider<String>"
         "releaseNotes"          | "setReleaseNotes"           | "releaseNotes4"              | "String"
         "releaseNotes"          | "setReleaseNotes"           | "releaseNotes5"              | "Provider<String>"
-        "binary"                | "binary"                    | "#projectDir#/some/binary/1" | "String"
-        "binary"                | "binary"                    | "#projectDir#/some/binary/2" | "File"
         "binary"                | "binary.set"                | "#projectDir#/some/binary/3" | "File"
         "binary"                | "binary.set"                | "#projectDir#/some/binary/4" | "Provider<RegularFile>"
-        "binary"                | "setBinary"                 | "#projectDir#/some/binary/5" | "String"
         "binary"                | "setBinary"                 | "#projectDir#/some/binary/6" | "File"
         "binary"                | "setBinary"                 | "#projectDir#/some/binary/7" | "Provider<RegularFile>"
 
-        "retryCount"            | "retryCount"                | 1                            | "Integer"
         "retryCount"            | "retryCount.set"            | 2                            | "Integer"
         "retryCount"            | "retryCount.set"            | 3                            | "Provider<Integer>"
         "retryCount"            | "setRetryCount"             | 4                            | "Integer"
 
-        "retryTimeout"          | "retryTimeout"              | 1000L                        | "Long"
         "retryTimeout"          | "retryTimeout.set"          | 2000L                        | "Long"
         "retryTimeout"          | "retryTimeout.set"          | 3000L                        | "Provider<Long>"
         "retryTimeout"          | "setRetryTimeout"           | 4000L                        | "Long"
@@ -430,7 +420,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-        publishAppCenter.binary = "$testFile"
+        publishAppCenter.binary.set(file("$testFile"))
         """.stripIndent()
 
         and: "a future version meta file"

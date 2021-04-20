@@ -1,5 +1,20 @@
-package wooga.gradle.appcenter.internal
+/*
+ * Copyright 2018-2021 Wooga GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+package wooga.gradle.appcenter.internal
 
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
@@ -32,28 +47,13 @@ class DefaultAppCenterPluginExtension implements AppCenterPluginExtension {
     }
 
     @Override
-    void apiToken(String value) {
-        setApiToken(value)
-    }
-
-    @Override
     void setOwner(String value) {
         owner.set(value)
     }
 
     @Override
-    void owner(String value) {
-        setOwner(value)
-    }
-
-    @Override
     void setApplicationIdentifier(String value) {
         applicationIdentifier.set(value)
-    }
-
-    @Override
-    void applicationIdentifier(String value) {
-        setApplicationIdentifier(value)
     }
 
     @Override
@@ -102,17 +102,7 @@ class DefaultAppCenterPluginExtension implements AppCenterPluginExtension {
     }
 
     @Override
-    void retryTimeout(Long value) {
-        setRetryTimeout(value)
-    }
-
-    @Override
     void setRetryCount(Integer value) {
         retryCount.set(value)
-    }
-
-    @Override
-    void retryCount(Integer value) {
-        setRetryTimeout(value)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Wooga GmbH
+ * Copyright 2019-2021 Wooga GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,12 @@ import org.gradle.api.provider.Property
 interface AppCenterPluginExtension {
     Property<String> getApiToken()
     void setApiToken(String value)
-    void apiToken(String value)
 
     Property<String> getOwner()
     void setOwner(String value)
-    void owner(String value)
     Property<String> getApplicationIdentifier()
 
     void setApplicationIdentifier(String value)
-    void applicationIdentifier(String value)
 
     ListProperty<Map<String, String>> getDefaultDestinations()
 
@@ -49,10 +46,8 @@ interface AppCenterPluginExtension {
 
     Property<Long> getRetryTimeout()
     void setRetryTimeout(Long value)
-    void retryTimeout(Long value)
 
     Property<Integer> getRetryCount()
     void setRetryCount(Integer value)
-    void retryCount(Integer value)
 
 }
