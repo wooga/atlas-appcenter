@@ -41,10 +41,10 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         buildFile << """
             version = "0.1.0"
             ${applyPlugin(AppCenterPlugin)}
-            publishAppCenter {
-                owner = "$owner"
-                apiToken = "$apiToken"
-                applicationIdentifier = "$applicationIdentifierIos"
+            publishAppCenter.configure { t ->
+                t.owner = "$owner"
+                t.apiToken = "$apiToken"
+                t.applicationIdentifier = "$applicationIdentifierIos"
             }
         """.stripIndent()
     }
@@ -86,8 +86,10 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         testFile = createBigUploadBinary(testFile, File.createTempDir("testUpload", "fileType"), 1024 * 1024 * desiredFileSize)
 
         buildFile << """
-            publishAppCenter.binary.set(file("${escapedPath(testFile.path)}"))
-            publishAppCenter.applicationIdentifier.set("$applicationIdentifier")
+            publishAppCenter.configure {
+                binary.set(file("${escapedPath(testFile.path)}"))
+                applicationIdentifier.set("$applicationIdentifier")
+            }
         """.stripIndent()
 
         expect:
@@ -104,8 +106,10 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         given: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource(fileName).path
         buildFile << """
-            publishAppCenter.binary.set(file("$testFile"))
-            publishAppCenter.applicationIdentifier.set("$applicationIdentifier")
+            publishAppCenter.configure {
+                binary.set(file("$testFile"))
+                applicationIdentifier.set("$applicationIdentifier")
+            }
         """.stripIndent()
 
         expect:
@@ -121,7 +125,9 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         given: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary.set(file("$testFile"))
+            publishAppCenter.configure {
+                binary.set(file("$testFile"))
+            }
         """.stripIndent()
 
         and: "a future version meta file"
@@ -139,7 +145,9 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         given: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary.set(file("$testFile"))
+            publishAppCenter.configure {
+                binary.set(file("$testFile"))
+            }
         """.stripIndent()
 
         and: "a future version meta file"
@@ -163,13 +171,17 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         ensureDistributionGroup("Test2")
 
         buildFile << """
-            publishAppCenter.destinations = ["Test", "Test2"]
+            publishAppCenter.configure {
+                destinations = ["Test", "Test2"]
+            }
         """.stripIndent()
 
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary.set(file("$testFile"))
+            publishAppCenter.configure {
+                binary.set(file("$testFile"))
+            }
         """.stripIndent()
 
         and: "a future version meta file"
@@ -192,14 +204,18 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         ensureDistributionGroup("Test2")
 
         buildFile << """
-            publishAppCenter.destination "Test"
-            publishAppCenter.destination "Test2"
+            publishAppCenter.configure {
+                destination "Test"
+                destination "Test2"
+            }
         """.stripIndent()
 
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary.set(file("$testFile"))
+            publishAppCenter.configure { 
+                binary.set(file("$testFile"))
+            }
         """.stripIndent()
 
         and: "a future version meta file"
@@ -218,13 +234,17 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
     def "fails when distribution group is invalid"() {
         given: "a publish task with invalid distribution groups"
         buildFile << """
-            publishAppCenter.destination "some value", "some other group"
+            publishAppCenter.configure {
+                destination "some value", "some other group"
+            }
         """.stripIndent()
 
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary = "$testFile"
+            publishAppCenter.configure {
+                binary = "$testFile"
+            }
         """.stripIndent()
 
         expect:
@@ -234,17 +254,21 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
     def "can publish custom build infos"() {
         given: "publish task with build infos"
         buildFile << """
-            publishAppCenter.buildInfo {
-                branchName = "master"
-                commitHash = "000000000000"
-                commitMessage = "Fix tests"
+            publishAppCenter.configure {
+                buildInfo {
+                    branchName = "master"
+                    commitHash = "000000000000"
+                    commitMessage = "Fix tests"
+                }
             }
         """.stripIndent()
 
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary.set(file("$testFile"))
+            publishAppCenter.configure {
+                binary.set(file("$testFile"))
+            }
         """.stripIndent()
 
         and: "a future version meta file"
@@ -271,13 +295,13 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
     def "can publish release notes"() {
         given: "publish task with release notes text"
         buildFile << """
-            publishAppCenter.releaseNotes = "${releaseNotes}"
+            publishAppCenter.configure { releaseNotes = "${releaseNotes}" }
         """.stripIndent()
 
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary.set(file("$testFile"))
+            publishAppCenter.configure { binary.set(file("$testFile")) }
         """.stripIndent()
 
         and: "a future version meta file"
@@ -303,7 +327,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
     @Unroll()
     def "can add publish destinations with :#method and type '#type'"() {
         given: "some configured property"
-        buildFile << "publishAppCenter.${method}(${value})"
+        buildFile << "publishAppCenter.configure { ${method}(${value}) }"
 
         and: "available groups"
         expectedGroups.each {
@@ -315,7 +339,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-            publishAppCenter.binary.set(file("$testFile"))
+            publishAppCenter.configure { binary.set(file("$testFile")) }
         """.stripIndent()
 
         and: "a future version meta file"
@@ -347,7 +371,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
     def "can set property :#property with :#method and type '#type'"() {
         given: "a task to print publishAppCenter properties"
         buildFile << """
-            task(custom) {
+            tasks.register("custom") {
                 doLast {
                     def value = publishAppCenter.${property}.get()
                     println("publishAppCenter.${property}: " + value)
@@ -361,7 +385,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         }
 
         and: "some configured property"
-        buildFile << "publishAppCenter.${method}(${value})"
+        buildFile << "publishAppCenter.configure { t -> t.${method}(${value}) }"
 
         when: ""
         def result = runTasksSuccessfully("custom")
@@ -415,12 +439,12 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         def group = ensureDistributionGroup("TestGroupFromId")
 
         and: "configuring destination group by id"
-        buildFile << "publishAppCenter.destinationId('${group['id']}')"
+        buildFile << "publishAppCenter.configure { destinationId('${group['id']}') }"
 
         and: "a dummy ipa binary to upload"
         def testFile = getClass().getClassLoader().getResource("test.ipa").path
         buildFile << """
-        publishAppCenter.binary.set(file("$testFile"))
+        publishAppCenter.configure{ binary.set(file("$testFile")) }
         """.stripIndent()
 
         and: "a future version meta file"

@@ -19,7 +19,7 @@ package wooga.gradle.appcenter
 import nebula.test.ProjectSpec
 import org.gradle.api.DefaultTask
 import org.gradle.api.publish.plugins.PublishingPlugin
-
+import org.gradle.api.tasks.TaskProvider
 import spock.lang.Unroll
 import wooga.gradle.appcenter.tasks.AppCenterUploadTask
 
@@ -67,14 +67,15 @@ class AppCenterPluginSpec extends ProjectSpec {
 
         when:
         project.plugins.apply(PLUGIN_NAME)
-        def publishTask
+        def publishTaskProvider
         project.afterEvaluate {
-            publishTask = project.tasks.findByName(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME)
+            publishTaskProvider = project.tasks.named(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME)
         }
 
         then:
         project.evaluate()
-        def publish = project.tasks.findByName(taskName)
+        def publish = project.tasks.named(taskName)
+        def publishTask = publishTaskProvider.get()
         publishTask.getDependsOn().contains(publish)
 
         where:
