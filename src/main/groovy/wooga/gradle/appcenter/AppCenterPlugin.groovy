@@ -19,6 +19,7 @@ package wooga.gradle.appcenter
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.publish.plugins.PublishingPlugin
 import wooga.gradle.appcenter.internal.DefaultAppCenterPluginExtension
 
@@ -39,30 +40,27 @@ class AppCenterPlugin implements Plugin<Project> {
 
         def tasks = project.tasks
 
-        def publishAppCenter = tasks.create(name: PUBLISH_APP_CENTER_TASK_NAME, type: AppCenterUploadTask, group: PublishingPlugin.PUBLISH_TASK_GROUP)
-        publishAppCenter.description = PUBLISH_APP_CENTER_TASK_DESCRIPTION
+        def publishAppCenter = tasks.register(PUBLISH_APP_CENTER_TASK_NAME, AppCenterUploadTask,{ t ->
+            t.group = PublishingPlugin.PUBLISH_TASK_GROUP
+            t.description = PUBLISH_APP_CENTER_TASK_DESCRIPTION
+        })
 
-        tasks.withType(AppCenterUploadTask, new Action<AppCenterUploadTask>() {
-            @Override
-            void execute(AppCenterUploadTask t) {
-                t.buildVersion.convention(project.providers.provider({ project.version.toString() }))
-                t.destinations.set(extension.defaultDestinations)
-                t.applicationIdentifier.convention(extension.applicationIdentifier)
-                t.apiToken.convention(extension.apiToken)
-                t.owner.convention(extension.owner)
-                t.retryCount.convention(extension.retryCount)
-                t.retryTimeout.convention(extension.retryTimeout)
-        }})
-
-        project.afterEvaluate(new Action<Project>() {
-            @Override
-            void execute(Project _) {
-                if (extension.isPublishEnabled().get()) {
-                    def lifecyclePublishTask = tasks.getByName(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME)
-                    lifecyclePublishTask.dependsOn(publishAppCenter)
+        tasks.withType(AppCenterUploadTask).configureEach { t ->
+            t.buildVersion.convention(project.providers.provider({ project.version.toString() }))
+            t.destinations.set(extension.defaultDestinations)
+            t.applicationIdentifier.convention(extension.applicationIdentifier)
+            t.apiToken.convention(extension.apiToken)
+            t.owner.convention(extension.owner)
+            t.retryCount.convention(extension.retryCount)
+            t.retryTimeout.convention(extension.retryTimeout)
+        }
+        project.afterEvaluate {
+            if (extension.isPublishEnabled().get()) {
+                tasks.named(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME).configure { task ->
+                    task.dependsOn(publishAppCenter)
                 }
             }
-        })
+        }
     }
 
     protected static AppCenterPluginExtension create_and_configure_extension(Project project) {
