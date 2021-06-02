@@ -219,6 +219,7 @@ class AppCenterUploadTask extends DefaultTask {
 
         HttpClient client = HttpClientBuilder.create()
                 .setDefaultRequestConfig(config)
+                .useSystemProperties()
                 .setServiceUnavailableRetryStrategy(new AppCenterRetryStrategy(retryCount.get(), retryTimeout.get().toInteger()))
                 .build()
 
