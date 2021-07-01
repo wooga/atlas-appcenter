@@ -11,7 +11,8 @@ withCredentials([string(credentialsId: 'atlas_appcenter_integration_token', vari
                  string(credentialsId: 'atlas_appcenter_integration_application_identifier_android_3', variable: 'appcenterAppIdAndroidLinux'),
 
                  string(credentialsId: 'atlas_appcenter_integration_application_owner', variable: 'appcenterOwner'),
-                 string(credentialsId: 'atlas_appcenter_coveralls_token', variable: 'coveralls_token')
+                 string(credentialsId: 'atlas_appcenter_coveralls_token', variable: 'coveralls_token'),
+                 string(credentialsId: 'atlas_plugins_sonar_token', variable: 'sonar_token')
                  ]) {
 
     def testEnvironment = [
@@ -38,5 +39,5 @@ withCredentials([string(credentialsId: 'atlas_appcenter_integration_token', vari
                                 ],
                           ]
 
-    buildGradlePlugin plaforms: ['osx', 'windows', 'linux'], coverallsToken: coveralls_token, testEnvironment: testEnvironment
+    buildGradlePlugin plaforms: ['osx', 'windows', 'linux'], coverallsToken: coveralls_token, sonarToken: sonar_token, testEnvironment: testEnvironment
 }
