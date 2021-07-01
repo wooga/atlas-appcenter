@@ -39,5 +39,5 @@ withCredentials([string(credentialsId: 'atlas_appcenter_integration_token', vari
                                 ],
                           ]
 
-    buildGradlePlugin plaforms: ['osx', 'windows', 'linux'], coverallsToken: coveralls_token, sonarToken: sonar_token, testEnvironment: testEnvironment
+    buildGradlePlugin platforms: ['osx', 'windows', 'linux'], coverallsToken: coveralls_token, sonarToken: sonar_token, testEnvironment: testEnvironment
 }
