@@ -16,7 +16,7 @@ withCredentials([string(credentialsId: 'atlas_appcenter_integration_token', vari
                  ]) {
 
     def testEnvironment = [
-                            'osx':
+                            'macos':
                                 [
                                         "ATLAS_APP_CENTER_INTEGRATION_API_TOKEN=${appcenterToken}",
                                         "ATLAS_APP_CENTER_OWNER=${appcenterOwner}",
@@ -39,5 +39,5 @@ withCredentials([string(credentialsId: 'atlas_appcenter_integration_token', vari
                                 ],
                           ]
 
-    buildGradlePlugin platforms: ['osx', 'windows', 'linux'], coverallsToken: coveralls_token, sonarToken: sonar_token, testEnvironment: testEnvironment
+    buildGradlePlugin platforms: ['macos', 'windows', 'linux'], coverallsToken: coveralls_token, sonarToken: sonar_token, testEnvironment: testEnvironment
 }
