@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 Wooga GmbH
+ * Copyright 2018-2022 Wooga GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,33 @@ class AppCenterPlugin implements Plugin<Project> {
     void apply(Project project) {
 
         project.pluginManager.apply(PublishingPlugin.class)
+        def extension = createAndConfigureExtension(project)
+        createAndConfigureTasks(project, extension)
+    }
 
-        def extension = create_and_configure_extension(project)
+    protected static AppCenterPluginExtension createAndConfigureExtension(Project project) {
+        def extension = project.extensions.create(AppCenterPluginExtension, EXTENSION_NAME, DefaultAppCenterPluginExtension)
 
+        extension.defaultDestinations.set(AppCenterConsts.defaultDestinations.getStringValueProvider(project)
+            .map({
+                it.split(',').collect { ["name": it.trim()] }
+            })
+        )
+
+        extension.apiToken.convention(AppCenterConsts.apiToken.getStringValueProvider(project))
+        extension.owner.convention(AppCenterConsts.owner.getStringValueProvider(project))
+        extension.applicationIdentifier.convention(AppCenterConsts.applicationIdentifier.getStringValueProvider(project))
+        extension.publishEnabled.convention(AppCenterConsts.publishEnabled.getBooleanValueProvider(project))
+        extension.retryTimeout.convention(AppCenterConsts.retryTimeout.getValueProvider(project, {Long.parseLong(it)}))
+        extension.retryCount.convention(AppCenterConsts.retryCount.getIntegerValueProvider(project))
+
+        extension
+    }
+
+    private static void createAndConfigureTasks(Project project, extension) {
         def tasks = project.tasks
 
-        def publishAppCenter = tasks.register(PUBLISH_APP_CENTER_TASK_NAME, AppCenterUploadTask,{ t ->
+        def publishAppCenter = tasks.register(PUBLISH_APP_CENTER_TASK_NAME, AppCenterUploadTask, { t ->
             t.group = PublishingPlugin.PUBLISH_TASK_GROUP
             t.description = PUBLISH_APP_CENTER_TASK_DESCRIPTION
         })
@@ -60,76 +81,5 @@ class AppCenterPlugin implements Plugin<Project> {
                 }
             }
         }
-    }
-
-    protected static AppCenterPluginExtension create_and_configure_extension(Project project) {
-        def extension = project.extensions.create(AppCenterPluginExtension, EXTENSION_NAME, DefaultAppCenterPluginExtension, project)
-
-//        extension.defaultDestinations.convention(AppCenterConventions.defaultDestinations.getValueProvider(project,
-//            {
-//                def result = (List<Map<String, String>> )it
-//                if (result == null){
-//                    result =it.split(',').collect { ["name": it.trim()] }
-//                }
-//                result
-//            }))
-
-        extension.defaultDestinations.set(project.provider({
-            String rawValue = (project.properties[AppCenterConventions.DEFAULT_DESTINATIONS_OPTION]
-                    ?: System.getenv()[AppCenterConventions.DEFAULT_DESTINATIONS_ENV_VAR]) as String
-
-            if (rawValue) {
-                return rawValue.split(',').collect { ["name": it.trim()] }
-            }
-
-            AppCenterConventions.defaultDestinations
-        }))
-
-        extension.apiToken.convention(AppCenterConventions.apiToken.getStringValueProvider(project))
-//        extension.apiToken.set(project.provider({
-//            (project.properties[AppCenterConventions.API_TOKEN_OPTION]
-//                    ?: System.getenv()[AppCenterConventions.API_TOKEN_ENV_VAR]) as String
-//        }))
-
-        extension.owner.convention(AppCenterConventions.owner.getStringValueProvider(project))
-//        extension.owner.set(project.provider({
-//            (project.properties[AppCenterConventions.OWNER_OPTION]
-//                    ?: System.getenv()[AppCenterConventions.OWNER_ENV_VAR]) as String
-//        }))
-
-        extension.applicationIdentifier.convention(AppCenterConventions.applicationIdentifier.getStringValueProvider(project))
-//        extension.applicationIdentifier.set(project.provider({
-//            (project.properties[AppCenterConventions.APPLICATION_IDENTIFIER_OPTION]
-//                    ?: System.getenv()[AppCenterConventions.APPLICATION_IDENTIFIER_ENV_VAR]) as String
-//        }))
-
-        extension.publishEnabled.convention(AppCenterConventions.publishEnabled.getBooleanValueProvider(project))
-//        extension.publishEnabled.set(project.provider({
-//            String rawValue = (project.properties[AppCenterConventions.PUBLISH_ENABLED_OPTION]
-//                    ?: System.getenv()[AppCenterConventions.PUBLISH_ENABLED_ENV_VAR]) as String
-//
-//            if (rawValue) {
-//                return (rawValue == "1" || rawValue.toLowerCase() == "yes" || rawValue.toLowerCase() == "y" || rawValue.toLowerCase() == "true")
-//            }
-//            AppCenterConventions.defaultPublishEnabled
-//        }))
-
-        extension.retryTimeout.convention(AppCenterConventions.retryTimeout.getValueProvider(project, {Long.parseLong(it)}))
-//        extension.retryTimeout.set(project.provider({
-//            String rawRetryTimout = (project.properties[AppCenterConventions.RETRY_TIMEOUT_OPTION]
-//                    ?: System.getenv()[AppCenterConventions.RETRY_TIMEOUT_ENV_VAR]) as String
-//
-//            (rawRetryTimout) ? Long.parseLong(rawRetryTimout) : AppCenterConventions.defaultRetryTimeout
-//        }))
-
-        extension.retryCount.convention(AppCenterConventions.retryCount.getIntegerValueProvider(project))
-//        extension.retryCount.set(project.provider({
-//            String rawRetryCount = (project.properties[AppCenterConventions.RETRY_COUNT_OPTION]
-//                    ?: System.getenv()[AppCenterConventions.RETRY_COUNT_ENV_VAR]) as String
-//
-//            (rawRetryCount) ? Integer.parseInt(rawRetryCount) : AppCenterConventions.defaultRetryCount
-//        }))
-
-        extension
     }
 }
