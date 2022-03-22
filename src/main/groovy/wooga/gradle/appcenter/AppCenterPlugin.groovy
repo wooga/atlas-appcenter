@@ -16,10 +16,9 @@
 
 package wooga.gradle.appcenter
 
-import org.gradle.api.Action
+
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.publish.plugins.PublishingPlugin
 import wooga.gradle.appcenter.internal.DefaultAppCenterPluginExtension
 
@@ -66,55 +65,70 @@ class AppCenterPlugin implements Plugin<Project> {
     protected static AppCenterPluginExtension create_and_configure_extension(Project project) {
         def extension = project.extensions.create(AppCenterPluginExtension, EXTENSION_NAME, DefaultAppCenterPluginExtension, project)
 
+//        extension.defaultDestinations.convention(AppCenterConventions.defaultDestinations.getValueProvider(project,
+//            {
+//                def result = (List<Map<String, String>> )it
+//                if (result == null){
+//                    result =it.split(',').collect { ["name": it.trim()] }
+//                }
+//                result
+//            }))
+
         extension.defaultDestinations.set(project.provider({
-            String rawValue = (project.properties[AppCenterConsts.DEFAULT_DESTINATIONS_OPTION]
-                    ?: System.getenv()[AppCenterConsts.DEFAULT_DESTINATIONS_ENV_VAR]) as String
+            String rawValue = (project.properties[AppCenterConventions.DEFAULT_DESTINATIONS_OPTION]
+                    ?: System.getenv()[AppCenterConventions.DEFAULT_DESTINATIONS_ENV_VAR]) as String
 
             if (rawValue) {
                 return rawValue.split(',').collect { ["name": it.trim()] }
             }
 
-            AppCenterConsts.defaultDestinations
+            AppCenterConventions.defaultDestinations
         }))
 
-        extension.apiToken.set(project.provider({
-            (project.properties[AppCenterConsts.API_TOKEN_OPTION]
-                    ?: System.getenv()[AppCenterConsts.API_TOKEN_ENV_VAR]) as String
-        }))
+        extension.apiToken.convention(AppCenterConventions.apiToken.getStringValueProvider(project))
+//        extension.apiToken.set(project.provider({
+//            (project.properties[AppCenterConventions.API_TOKEN_OPTION]
+//                    ?: System.getenv()[AppCenterConventions.API_TOKEN_ENV_VAR]) as String
+//        }))
 
-        extension.owner.set(project.provider({
-            (project.properties[AppCenterConsts.OWNER_OPTION]
-                    ?: System.getenv()[AppCenterConsts.OWNER_ENV_VAR]) as String
-        }))
+        extension.owner.convention(AppCenterConventions.owner.getStringValueProvider(project))
+//        extension.owner.set(project.provider({
+//            (project.properties[AppCenterConventions.OWNER_OPTION]
+//                    ?: System.getenv()[AppCenterConventions.OWNER_ENV_VAR]) as String
+//        }))
 
-        extension.applicationIdentifier.set(project.provider({
-            (project.properties[AppCenterConsts.APPLICATION_IDENTIFIER_OPTION]
-                    ?: System.getenv()[AppCenterConsts.APPLICATION_IDENTIFIER_ENV_VAR]) as String
-        }))
+        extension.applicationIdentifier.convention(AppCenterConventions.applicationIdentifier.getStringValueProvider(project))
+//        extension.applicationIdentifier.set(project.provider({
+//            (project.properties[AppCenterConventions.APPLICATION_IDENTIFIER_OPTION]
+//                    ?: System.getenv()[AppCenterConventions.APPLICATION_IDENTIFIER_ENV_VAR]) as String
+//        }))
 
-        extension.publishEnabled.set(project.provider({
-            String rawValue = (project.properties[AppCenterConsts.PUBLISH_ENABLED_OPTION]
-                    ?: System.getenv()[AppCenterConsts.PUBLISH_ENABLED_ENV_VAR]) as String
+        extension.publishEnabled.convention(AppCenterConventions.publishEnabled.getBooleanValueProvider(project))
+//        extension.publishEnabled.set(project.provider({
+//            String rawValue = (project.properties[AppCenterConventions.PUBLISH_ENABLED_OPTION]
+//                    ?: System.getenv()[AppCenterConventions.PUBLISH_ENABLED_ENV_VAR]) as String
+//
+//            if (rawValue) {
+//                return (rawValue == "1" || rawValue.toLowerCase() == "yes" || rawValue.toLowerCase() == "y" || rawValue.toLowerCase() == "true")
+//            }
+//            AppCenterConventions.defaultPublishEnabled
+//        }))
 
-            if (rawValue) {
-                return (rawValue == "1" || rawValue.toLowerCase() == "yes" || rawValue.toLowerCase() == "y" || rawValue.toLowerCase() == "true")
-            }
-            AppCenterConsts.defaultPublishEnabled
-        }))
+        extension.retryTimeout.convention(AppCenterConventions.retryTimeout.getValueProvider(project, {Long.parseLong(it)}))
+//        extension.retryTimeout.set(project.provider({
+//            String rawRetryTimout = (project.properties[AppCenterConventions.RETRY_TIMEOUT_OPTION]
+//                    ?: System.getenv()[AppCenterConventions.RETRY_TIMEOUT_ENV_VAR]) as String
+//
+//            (rawRetryTimout) ? Long.parseLong(rawRetryTimout) : AppCenterConventions.defaultRetryTimeout
+//        }))
 
-        extension.retryTimeout.set(project.provider({
-            String rawRetryTimout = (project.properties[AppCenterConsts.RETRY_TIMEOUT_OPTION]
-                    ?: System.getenv()[AppCenterConsts.RETRY_TIMEOUT_ENV_VAR]) as String
-
-            (rawRetryTimout) ? Long.parseLong(rawRetryTimout) : AppCenterConsts.defaultRetryTimeout
-        }))
-
-        extension.retryCount.set(project.provider({
-            String rawRetryCount = (project.properties[AppCenterConsts.RETRY_COUNT_OPTION]
-                    ?: System.getenv()[AppCenterConsts.RETRY_COUNT_ENV_VAR]) as String
-
-            (rawRetryCount) ? Integer.parseInt(rawRetryCount) : AppCenterConsts.defaultRetryCount
-        }))
+        extension.retryCount.convention(AppCenterConventions.retryCount.getIntegerValueProvider(project))
+//        extension.retryCount.set(project.provider({
+//            String rawRetryCount = (project.properties[AppCenterConventions.RETRY_COUNT_OPTION]
+//                    ?: System.getenv()[AppCenterConventions.RETRY_COUNT_ENV_VAR]) as String
+//
+//            (rawRetryCount) ? Integer.parseInt(rawRetryCount) : AppCenterConventions.defaultRetryCount
+//        }))
 
         extension
     }
