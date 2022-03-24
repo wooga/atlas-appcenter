@@ -21,33 +21,50 @@ package wooga.gradle.appcenter
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
-interface AppCenterPluginExtension {
-    Property<String> getApiToken()
-    void setApiToken(String value)
+trait AppCenterPluginExtension implements AppCenterSpec {
 
-    Property<String> getOwner()
-    void setOwner(String value)
-    Property<String> getApplicationIdentifier()
+    // TODO: Refactor, deprecate to use `destinations` instead?
+    private final ListProperty<Map<String, String>> defaultDestinations = objects.listProperty(Map)
 
-    void setApplicationIdentifier(String value)
+    ListProperty<Map<String, String>> getDefaultDestinations() {
+        defaultDestinations
+    }
 
-    ListProperty<Map<String, String>> getDefaultDestinations()
+    void setDefaultDestinations(Iterable<String> value) {
+        defaultDestinations.set(value.collect {["name": it]})
+    }
 
-    void setDefaultDestinations(Iterable<String> value)
-    void setDefaultDestinations(String... destinations)
-    void defaultDestination(String name)
-    void defaultDestination(Iterable<String> destinations)
-    void defaultDestination(String... destinations)
-    void defaultDestinationId(String id)
+    void setDefaultDestinations(String... destinations) {
+        defaultDestinations.set(destinations.collect {["name": it]})
+    }
 
-    Property<Boolean> getPublishEnabled()
-    Property<Boolean> isPublishEnabled()
-    void setPublishEnabled(final boolean enabled)
+    void defaultDestination(String name) {
+        defaultDestinations.add(["name": name])
+    }
 
-    Property<Long> getRetryTimeout()
-    void setRetryTimeout(Long value)
+    void defaultDestination(Iterable<String> destinations) {
+        defaultDestinations.addAll(destinations.collect {["name": it]})
+    }
 
-    Property<Integer> getRetryCount()
-    void setRetryCount(Integer value)
+    void defaultDestination(String... destinations) {
+        defaultDestinations.addAll(destinations.collect {["name": it]})
+    }
 
+    void defaultDestinationId(String id) {
+        defaultDestinations.add(["id": id])
+    }
+
+    private final Property<Boolean> publishEnabled = objects.property(Boolean)
+
+    Property<Boolean> getPublishEnabled() {
+        publishEnabled
+    }
+
+    Property<Boolean> isPublishEnabled() {
+        return publishEnabled
+    }
+
+    void setPublishEnabled(boolean enabled) {
+        this.publishEnabled.set(enabled)
+    }
 }
