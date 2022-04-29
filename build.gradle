@@ -15,7 +15,10 @@
  */
 
 plugins {
-  id "net.wooga.plugins" version "2.2.3"
+    id "net.wooga.plugins" version "2.3.0"
+    id 'net.wooga.snyk' version '0.10.0'
+    id "net.wooga.snyk-gradle-plugin" version "0.2.0"
+    id "net.wooga.cve-dependency-resolution" version "0.4.0"
 }
 
 group 'net.wooga.gradle'
@@ -37,6 +40,10 @@ pluginBundle {
 
 github {
     repositoryName = "wooga/atlas-appcenter"
+}
+
+cveHandler {
+    configurations("compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath", "integrationTestCompileClasspath", "integrationTestRuntimeClasspath")
 }
 
 dependencies {

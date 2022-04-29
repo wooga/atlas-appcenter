@@ -12,7 +12,8 @@ withCredentials([string(credentialsId: 'atlas_appcenter_integration_token', vari
 
                  string(credentialsId: 'atlas_appcenter_integration_application_owner', variable: 'appcenterOwner'),
                  string(credentialsId: 'atlas_appcenter_coveralls_token', variable: 'coveralls_token'),
-                 string(credentialsId: 'atlas_plugins_sonar_token', variable: 'sonar_token')
+                 string(credentialsId: 'atlas_plugins_sonar_token', variable: 'sonar_token'),
+                 string(credentialsId: 'atlas_plugins_snyk_token', variable: 'SNYK_TOKEN')
                  ]) {
 
     def testEnvironment = [
