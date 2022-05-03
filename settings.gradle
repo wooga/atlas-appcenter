@@ -20,4 +20,4 @@ pluginManagement {
   }
 }
 
-rootProject.name = 'atlas-appcenter'
+rootProject.name = 'appcenter'

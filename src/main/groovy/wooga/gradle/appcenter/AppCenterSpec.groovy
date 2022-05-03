@@ -26,9 +26,9 @@ import org.gradle.api.tasks.Optional
 
 trait AppCenterSpec extends BaseSpec {
 
-    @Input
     private final Property<String> apiToken = objects.property(String)
 
+    @Input
     Property<String> getApiToken() {
         apiToken
     }
@@ -41,9 +41,9 @@ trait AppCenterSpec extends BaseSpec {
         apiToken.set(value)
     }
 
-    @Input
     private final Property<String> owner = objects.property(String)
 
+    @Input
     Property<String> getOwner() {
         owner
     }
@@ -56,9 +56,9 @@ trait AppCenterSpec extends BaseSpec {
         owner.set(value)
     }
 
-    @Input
     private final Property<String> applicationIdentifier = objects.property(String)
 
+    @Input
     Property<String> getApplicationIdentifier() {
         applicationIdentifier
     }
