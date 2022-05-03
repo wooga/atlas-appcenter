@@ -33,8 +33,12 @@ import wooga.gradle.appcenter.api.AppCenterRetryStrategy
 
 class AppCenterUploadTask extends DefaultTask implements AppCenterTaskSpec {
 
+    private final DirectoryProperty outputDir
+
     @Internal
-    protected final DirectoryProperty outputDir
+    protected DirectoryProperty getOutputDir() {
+        outputDir
+    }
 
     @OutputFile
     final Provider<RegularFile> uploadVersionMetaData

@@ -15,7 +15,7 @@
  */
 
 plugins {
-    id "net.wooga.plugins" version "2.3.0"
+    id "net.wooga.plugins" version "3.2.0"
     id 'net.wooga.snyk' version '0.10.0'
     id "net.wooga.snyk-gradle-plugin" version "0.2.0"
     id "net.wooga.cve-dependency-resolution" version "0.4.0"
@@ -28,12 +28,15 @@ pluginBundle {
     website = 'https://wooga.github.io/atlas-appcenter/'
     vcsUrl = 'https://github.com/wooga/atlas-appcenter'
     tags = ['AppCenter']
+}
 
+gradlePlugin {
     plugins {
         appcenter {
             id = 'net.wooga.appcenter'
             displayName = 'Gradle AppCenter plugin'
             description = 'This plugin provides tasks for uploading a build to AppCenter'
+            implementationClass = 'wooga.gradle.appcenter.AppCenterPlugin'
         }
     }
 }
