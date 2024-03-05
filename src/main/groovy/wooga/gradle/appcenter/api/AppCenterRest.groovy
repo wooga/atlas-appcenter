@@ -16,10 +16,16 @@
 
 package wooga.gradle.appcenter.api
 
+import groovy.json.JsonException
 import groovy.json.JsonSlurper
 import org.apache.http.HttpResponse
 
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
+
 class AppCenterRest {
+
+    static final Logger logger = Logging.getLogger(AppCenterRest)
 
     static CONTENT_TYPES = [
             apk       : "application/vnd.android.package-archive",
@@ -65,6 +71,17 @@ class AppCenterRest {
 
     static Map getResponseBody(HttpResponse response) {
         def jsonSlurper = new JsonSlurper()
-        jsonSlurper.parseText(response.entity.content.text) as Map
+        def statusCode = response.statusLine.statusCode
+        def content = response.entity.content.text
+        try {
+            jsonSlurper.parseText(content) as Map
+        } catch(JsonException e) {
+            logger.warn("App center returned unexpected non-json error message: $content, with $statusCode response code.")
+            return [
+                code: statusCode,
+                message: content,
+                error: true
+            ]
+        }
     }
 }
