@@ -30,6 +30,9 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import wooga.gradle.appcenter.api.AppCenterReleaseUploader
 import wooga.gradle.appcenter.api.AppCenterRetryStrategy
+import wooga.gradle.appcenter.error.RetryableException
+
+import java.util.function.Supplier
 
 class AppCenterUploadTask extends DefaultTask implements AppCenterTaskSpec {
 
@@ -78,10 +81,27 @@ class AppCenterUploadTask extends DefaultTask implements AppCenterTaskSpec {
         distributionSettings.destinations = destinations.getOrElse([])
         distributionSettings.buildInfo = getBuildInfo()
 
-        AppCenterReleaseUploader.UploadResult result = uploader.upload(binary.get().asFile)
+        AppCenterReleaseUploader.UploadResult result = retry(retryCount.get(), retryTimeout.get()) {
+            return uploader.upload(binary.get().asFile)
+        }
         logger.info("published to AppCenter release: ${result.releaseID}")
         logger.info("download_url: ${result.downloadUrl}")
         logger.info("install_url: ${result.installUrl}")
         uploadVersionMetaData.get().asFile << JsonOutput.prettyPrint(JsonOutput.toJson(result.release))
+    }
+
+    <T> T retry(int maxRetries, long waitMs, Supplier<T> operation) {
+        try {
+            return operation.get()
+        } catch(RetryableException e) {
+            maxRetries--
+            if(maxRetries > 0) {
+                logger.warn("Retrying at task level, waiting for $waitMs ms. ${maxRetries} retries left")
+                Thread.sleep(waitMs)
+                return (T) retry(maxRetries, waitMs, operation)
+            } else {
+                throw new Exception("Operation exceed maximum amount of retries", e.cause)
+            }
+        }
     }
 }

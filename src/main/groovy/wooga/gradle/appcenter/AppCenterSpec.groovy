@@ -17,12 +17,11 @@
 package wooga.gradle.appcenter
 
 import com.wooga.gradle.BaseSpec
-import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Optional
+
 
 trait AppCenterSpec extends BaseSpec {
 
