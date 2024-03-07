@@ -31,6 +31,8 @@ import spock.lang.Unroll
 import wooga.gradle.appcenter.AppCenterPlugin
 import wooga.gradle.appcenter.IntegrationSpec
 
+import static com.wooga.gradle.PlatformUtils.escapedPath
+
 class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
     static String apiToken = System.env["ATLAS_APP_CENTER_INTEGRATION_API_TOKEN"]
     static String owner = System.env["ATLAS_APP_CENTER_OWNER"]

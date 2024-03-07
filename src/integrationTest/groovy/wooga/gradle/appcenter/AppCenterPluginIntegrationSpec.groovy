@@ -1,7 +1,9 @@
 package wooga.gradle.appcenter
 
-
+import com.wooga.gradle.test.PropertyLocation
 import spock.lang.Unroll
+
+import static com.wooga.gradle.PlatformUtils.escapedPath
 
 class AppCenterPluginIntegrationSpec extends IntegrationSpec {
 
@@ -9,23 +11,6 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         buildFile << """
             ${applyPlugin(AppCenterPlugin)}
         """.stripIndent()
-    }
-
-    enum PropertyLocation {
-        none, script, property, env
-
-        String reason() {
-            switch (this) {
-                case script:
-                    return "value is provided in script"
-                case property:
-                    return "value is provided in props"
-                case env:
-                    return "value is set in env"
-                default:
-                    return "no value was configured"
-            }
-        }
     }
 
     String envNameFromProperty(String property) {
@@ -47,7 +32,7 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         and: "a gradle.properties"
         def propertiesFile = createFile("gradle.properties")
 
-        def escapedValue = (value instanceof String) ? escapedPath(value) : value
+        def escapedValue = (value instanceof String) ?  escapedPath(value) : value
 
         switch (location) {
             case PropertyLocation.script:
