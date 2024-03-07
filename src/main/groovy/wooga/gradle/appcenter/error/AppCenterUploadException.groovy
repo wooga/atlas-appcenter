@@ -19,19 +19,23 @@ package wooga.gradle.appcenter.error
 import groovy.transform.InheritConstructors
 
 @InheritConstructors
-class AppCenterUploadException extends Exception {
+class RetryableException extends RuntimeException {
 }
 
 @InheritConstructors
-class AppCenterAppExtractionException extends Exception {
+class AppCenterUploadException extends RetryableException {
 }
 
 @InheritConstructors
-class AppCenterAppUploadServerErrorException extends Exception {
+class AppCenterAppExtractionException extends RetryableException {
 }
 
 @InheritConstructors
-class AppCenterMalwareDetectionException extends Exception {
+class AppCenterAppUploadServerErrorException extends RetryableException {
+}
+
+@InheritConstructors
+class AppCenterMalwareDetectionException extends RetryableException {
 
 }
 

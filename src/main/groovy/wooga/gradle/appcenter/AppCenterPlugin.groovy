@@ -57,7 +57,7 @@ class AppCenterPlugin implements Plugin<Project> {
         extension
     }
 
-    private static void createAndConfigureTasks(Project project, extension) {
+    private static void createAndConfigureTasks(Project project, AppCenterPluginExtension extension) {
         def tasks = project.tasks
 
         def publishAppCenter = tasks.register(PUBLISH_APP_CENTER_TASK_NAME, AppCenterUploadTask, { t ->

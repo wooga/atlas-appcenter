@@ -29,6 +29,7 @@ import org.gradle.api.tasks.Optional
 import wooga.gradle.appcenter.AppCenterSpec
 import wooga.gradle.appcenter.api.AppCenterBuildInfo
 
+
 import static org.gradle.util.ConfigureUtil.configureUsing
 
 trait AppCenterTaskSpec extends AppCenterSpec {
