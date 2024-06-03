@@ -25,9 +25,11 @@ class AppCenterConsts {
     static PropertyLookup owner = new PropertyLookup("APP_CENTER_OWNER", "appCenter.owner", null)
     static PropertyLookup applicationIdentifier = new PropertyLookup("APP_CENTER_APPLICATION_IDENTIFIER", "appCenter.applicationIdentifier", null)
 
-    static PropertyLookup defaultDestinations = new PropertyLookup("APP_CENTER_DEFAULT_DESTINATIONS", "appCenter.defaultDestinations",  "Collaborators")
+    static PropertyLookup defaultDestinations = new PropertyLookup("APP_CENTER_DEFAULT_DESTINATIONS", "appCenter.defaultDestinations", "Collaborators")
 
     static PropertyLookup publishEnabled = new PropertyLookup("APP_CENTER_PUBLISH_ENABLED", "appCenter.publishEnabled", true)
     static PropertyLookup retryTimeout = new PropertyLookup("APP_CENTER_RETRY_TIMEOUT", "appCenter.retryTimeout", 1000 * 60)
     static PropertyLookup retryCount = new PropertyLookup("APP_CENTER_RETRY_COUNT", "appCenter.retryCount", 30)
+    static PropertyLookup binary = new PropertyLookup("APP_CENTER_BINARY", "appCenter.binary", null)
+    static PropertyLookup releaseNotes = new PropertyLookup("APP_CENTER_RELEASE_NOTES", "appCenter.releaseNotes", null)
 }

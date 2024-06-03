@@ -18,7 +18,9 @@ package wooga.gradle.appcenter
 
 import nebula.test.ProjectSpec
 import org.gradle.api.DefaultTask
+import org.gradle.api.Task
 import org.gradle.api.publish.plugins.PublishingPlugin
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.TaskProvider
 import spock.lang.Unroll
 import wooga.gradle.appcenter.tasks.AppCenterUploadTask
@@ -81,5 +83,70 @@ class AppCenterPluginSpec extends ProjectSpec {
         where:
         taskName           | _
         "publishAppCenter" | _
+    }
+
+    def "publishAppCenter task depends on artifact task if artifact is present and no binary was set"() {
+        given: "no plugin has been applied yet"
+        assert !project.plugins.hasPlugin(PLUGIN_NAME)
+
+        and: "creates artifact generator task"
+        def artifactFile = new File(projectDir, "artifactDir/artifact")
+        def artifactTask = project.tasks.register("testArtifactTask", Copy) {
+            from new File(projectDir, "artifact")
+            into artifactFile.parentFile
+            rename ".*", artifactFile.name
+        }
+
+        and: "stores artifact"
+        def artifact = project.with {
+            configurations.create("archives")
+            artifacts.add("archives", artifactTask.map {
+                it.outputs.files.find {it == artifactFile}
+            }) {
+                it.type = "myartifact"
+            }
+            return configurations.archives.artifacts.matching { it.type == "myartifact" }.first()
+        }
+
+        when: "apply plugin"
+        assert project.plugins.apply(PLUGIN_NAME)
+        and: "add artifact to extension"
+        def appCenter = project.extensions.findByType(AppCenterPluginExtension)
+        appCenter.artifact(artifact)
+        and: "evaluated project"
+        project.evaluate()
+        then: "appCenterPublish depends on task used to generate artifact"
+        def appCenterPublish = project.tasks.named(AppCenterPlugin.PUBLISH_APP_CENTER_TASK_NAME, AppCenterUploadTask).get()
+        def dependencies = appCenterPublish.taskDependencies.getDependencies(appCenterPublish)
+        dependencies.contains(artifactTask.get())
+    }
+
+    def "publishAppCenter task depends on task used to generate appCenter binary"() {
+        given: "no plugin has been applied yet"
+        assert !project.plugins.hasPlugin(PLUGIN_NAME)
+        and: "a binary generator task"
+        def binary = new File(projectDir, "artifactDir/artifact")
+        def binaryTask = project.tasks.register("testBinaryTask", Copy) {
+            from new File(projectDir, "artifact")
+            into binary.parentFile
+            rename ".*", binary.name
+        }
+        def binaryProvider = project.layout.file(binaryTask.map {
+            it.outputs.files.find {it == binary} as File
+        })
+
+        when: "plugin is applied"
+        assert project.plugins.apply(PLUGIN_NAME)
+        and: "extension binary property is set"
+        def appCenter = project.extensions.findByType(AppCenterPluginExtension)
+        appCenter.binary = binaryProvider
+        and: "evaluated project"
+        project.evaluate()
+
+        then: "appCenterPublish depends on task used to generate artifact"
+        def appCenterPublish = project.tasks.named(AppCenterPlugin.PUBLISH_APP_CENTER_TASK_NAME, AppCenterUploadTask).get()
+        def dependencies = appCenterPublish.taskDependencies.getDependencies(appCenterPublish)
+        dependencies.contains(binaryTask.get())
+
     }
 }

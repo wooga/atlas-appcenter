@@ -16,6 +16,7 @@
 
 package wooga.gradle.appcenter
 
+import com.wooga.gradle.test.PropertyUtils
 import groovy.json.StringEscapeUtils
 import nebula.test.functional.ExecutionResult
 
@@ -101,7 +102,7 @@ class IntegrationSpec extends nebula.test.IntegrationSpec {
                 value = "${rawValue}L"
                 break
             default:
-                value = rawValue
+                value = PropertyUtils.wrapValue(rawValue, type)
         }
         value
     }
