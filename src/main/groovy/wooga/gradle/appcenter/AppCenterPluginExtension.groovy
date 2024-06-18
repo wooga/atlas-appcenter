@@ -17,11 +17,41 @@
 
 package wooga.gradle.appcenter
 
-
+import org.gradle.api.artifacts.PublishArtifact
+import org.gradle.api.file.RegularFile
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 
 trait AppCenterPluginExtension implements AppCenterSpec {
+
+    abstract void artifact(Provider<PublishArtifact> artifact);
+    abstract void artifact(PublishArtifact artifact);
+
+    private final Property<String> releaseNotes = objects.property(String)
+
+    Property<String> getReleaseNotes() {
+        releaseNotes
+    }
+
+    void setReleaseNotes(Provider<String> value) {
+        releaseNotes.set(value)
+    }
+
+    private final RegularFileProperty binary = objects.fileProperty()
+
+    RegularFileProperty getBinary() {
+        binary
+    }
+
+    void setBinary(Provider<RegularFile> value) {
+        binary.set(value)
+    }
+
+    void setBinary(File value) {
+        binary.set(value)
+    }
 
     // TODO: Refactor, deprecate to use `destinations` instead?
     private final ListProperty<Map<String, String>> defaultDestinations = objects.listProperty(Map)

@@ -19,6 +19,8 @@ package wooga.gradle.appcenter
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.PublishArtifact
+import org.gradle.api.internal.provider.MissingValueException
 import org.gradle.api.publish.plugins.PublishingPlugin
 import wooga.gradle.appcenter.internal.DefaultAppCenterPluginExtension
 
@@ -38,8 +40,8 @@ class AppCenterPlugin implements Plugin<Project> {
         createAndConfigureTasks(project, extension)
     }
 
-    protected static AppCenterPluginExtension createAndConfigureExtension(Project project) {
-        def extension = project.extensions.create(AppCenterPluginExtension, EXTENSION_NAME, DefaultAppCenterPluginExtension)
+    protected static DefaultAppCenterPluginExtension createAndConfigureExtension(Project project) {
+        def extension = project.extensions.create(AppCenterPluginExtension, EXTENSION_NAME, DefaultAppCenterPluginExtension) as DefaultAppCenterPluginExtension
 
         extension.defaultDestinations.set(AppCenterConsts.defaultDestinations.getStringValueProvider(project)
             .map({
@@ -54,10 +56,22 @@ class AppCenterPlugin implements Plugin<Project> {
         extension.retryTimeout.convention(AppCenterConsts.retryTimeout.getValueProvider(project, {Long.parseLong(it)}))
         extension.retryCount.convention(AppCenterConsts.retryCount.getIntegerValueProvider(project))
 
-        extension
+        def artifactFile = extension.artifact.map { PublishArtifact it ->
+            try {
+                return project.layout.projectDirectory.file(it.file.absolutePath)
+                //if the backing of artifact.file is a provider it just tries to resolve it, and
+                // if there is nothing yet in the provider, it throws
+            } catch (MissingValueException _) {
+                return null
+            }
+        }
+        extension.binary.convention(artifactFile)
+        extension.releaseNotes.convention(AppCenterConsts.releaseNotes.getStringValueProvider(project))
+
+        return extension
     }
 
-    private static void createAndConfigureTasks(Project project, AppCenterPluginExtension extension) {
+    private static void createAndConfigureTasks(Project project, DefaultAppCenterPluginExtension extension) {
         def tasks = project.tasks
 
         def publishAppCenter = tasks.register(PUBLISH_APP_CENTER_TASK_NAME, AppCenterUploadTask, { t ->
@@ -73,6 +87,10 @@ class AppCenterPlugin implements Plugin<Project> {
             t.owner.convention(extension.owner)
             t.retryCount.convention(extension.retryCount)
             t.retryTimeout.convention(extension.retryTimeout)
+            t.binary.convention(extension.binary)
+            if(extension.artifact.present && !t.binary.present) {
+                dependsOn(extension.artifact.get().buildDependencies)
+            }
         }
         project.afterEvaluate {
             if (extension.isPublishEnabled().get()) {

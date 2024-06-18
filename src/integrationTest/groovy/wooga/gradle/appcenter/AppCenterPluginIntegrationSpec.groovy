@@ -145,7 +145,13 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
 
     @Unroll
     def "can set property :#property with :#method and type '#type'"() {
-        given: "a task to print appCenter properties"
+        given: "the test value with replace placeholders"
+        def value = rawValue
+        if (value instanceof String) {
+            value = value.replaceAll("#projectDir#", escapedPath(projectDir.path))
+        }
+
+        and: "a task to print appCenter properties"
         buildFile << """
             task(custom) {
                 doLast {
@@ -156,18 +162,20 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         """
 
         and: "some configured property"
-        buildFile << "appCenter.${method}(${value})"
+        buildFile << "appCenter.${method}(${wrapValueBasedOnType(value, type)})"
 
-        and: "the test value with replace placeholders"
-        if (value instanceof String) {
-            value = value.replaceAll("#projectDir#", escapedPath(projectDir.path))
+
+
+        when:
+        def result = runTasksSuccessfully("custom")
+        and:
+
+        if(type.contains("File")) {
+          value = new File(value).path
         }
 
-        when: ""
-        def result = runTasksSuccessfully("custom")
-
         then:
-        result.standardOutput.contains("appCenter.${property}: ${rawValue}")
+        result.standardOutput.contains("appCenter.${property}: ${value}")
 
         where:
         property                | method                      | rawValue                 | type
@@ -176,6 +184,18 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         "apiToken"              | "apiToken.set"              | "testToken3"             | "Provider<String>"
         "apiToken"              | "setApiToken"               | "testToken4"             | "String"
         "apiToken"              | "setApiToken"               | "testToken5"             | "Provider<String>"
+
+        "binary"                | "binary.set"                | "#projectDir#/bin2"      | "RegularFile"
+        "binary"                | "binary.set"                | "#projectDir#/bin3"      | "Provider<RegularFile>"
+        "binary"                | "setBinary"                 | "#projectDir#/bin4"      | "File"
+        "binary"                | "setBinary"                 | "#projectDir#/bin4"      | "RegularFile"
+        "binary"                | "setBinary"                 | "#projectDir#/bin5"      | "Provider<RegularFile>"
+
+        "releaseNotes"          | "releaseNotes.set"          | "notes2"                 | "String"
+        "releaseNotes"          | "releaseNotes.set"          | "notes3"                 | "Provider<String>"
+        "releaseNotes"          | "setReleaseNotes"           | "notes4"                 | "String"
+        "releaseNotes"          | "setReleaseNotes"           | "notes5"                 | "Provider<String>"
+
         "owner"                 | "owner"                     | "owner1"                 | "String"
         "owner"                 | "owner.set"                 | "owner2"                 | "String"
         "owner"                 | "owner.set"                 | "owner3"                 | "Provider<String>"
@@ -186,7 +206,6 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         "applicationIdentifier" | "applicationIdentifier.set" | "applicationIdentifier3" | "Provider<String>"
         "applicationIdentifier" | "setApplicationIdentifier"  | "applicationIdentifier4" | "String"
         "applicationIdentifier" | "setApplicationIdentifier"  | "applicationIdentifier5" | "Provider<String>"
-        value = wrapValueBasedOnType(rawValue, type)
     }
 
 
@@ -255,6 +274,45 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         "publish" | "publishAppCenter" | true    | true
         "publish" | "publishAppCenter" | false   | false
         message = (dependsOnTask) ? "depends" : "depends not"
+    }
+
+    def "uploads artifact set with appCenter.artifact() method"() {
+        given: "a project with property set"
+        def artifactFile = new File(projectDir, "artifacts/artifact.ipa")
+        buildFile << """
+            def artifactTask = tasks.register("$artifactTaskName", Copy) {
+                from ${wrapValueBasedOnType(getClass().classLoader.getResource("test.ipa").path, "File")}
+                into ${wrapValueBasedOnType(artifactFile.parentFile.absolutePath, "File")}
+                rename ".*", ${wrapValueBasedOnType(artifactFile.name, "String")}
+            }
+            configurations.create("test")
+            artifacts.add("test", artifactTask.map {
+                it.outputs.files.find {
+                    it.absolutePath == ${wrapValueBasedOnType(artifactFile.absolutePath, "File")}
+                }
+            }) { it.type = "myartifact" }
+            def artifactObj = configurations.test.artifacts.matching { it.type == "myartifact" }.first()
+            appCenter {
+                owner = "$owner"
+                apiToken = "$apiToken"
+                applicationIdentifier = "$applicationIdentifier"
+                publishEnabled = true
+                artifact(artifactObj)
+            }
+        """
+
+        and: "a dummy ipa binary to upload"
+        def testFile = getClass().getClassLoader().getResource("test.ipa").path
+        buildFile << """
+            publishAppCenter.binary = file("$testFile")
+        """.stripIndent()
+
+        expect:
+        def result = runTasksSuccessfully("publishAppCenter")
+        result.wasExecuted(artifactTaskName)
+
+        where:
+        artifactTaskName = "artifactTask"
     }
 
 }

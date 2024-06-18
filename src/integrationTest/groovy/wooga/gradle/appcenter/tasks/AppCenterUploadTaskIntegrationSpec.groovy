@@ -30,6 +30,9 @@ import org.apache.http.impl.client.HttpClientBuilder
 import spock.lang.Unroll
 import wooga.gradle.appcenter.AppCenterPlugin
 import wooga.gradle.appcenter.IntegrationSpec
+import wooga.gradle.appcenter.error.RetryableException
+
+import java.util.function.Supplier
 
 class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
     static String apiToken = System.env["ATLAS_APP_CENTER_INTEGRATION_API_TOKEN"]
@@ -478,25 +481,27 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
     }
 
     Map<String, String> ensureDistributionGroup(String name) {
-        HttpClient client = HttpClientBuilder.create().build()
-        HttpPost request = new HttpPost("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifierIos}/distribution_groups")
+        retry(5, 500) {
+            HttpClient client = HttpClientBuilder.create().build()
+            HttpPost request = new HttpPost("https://api.appcenter.ms/v0.1/apps/${owner}/${applicationIdentifierIos}/distribution_groups")
 
-        request.setHeader("Accept", 'application/json')
-        request.setHeader("X-API-Token", apiToken)
+            request.setHeader("Accept", 'application/json')
+            request.setHeader("X-API-Token", apiToken)
 
-        def body = ["name": name]
-        request.setEntity(new StringEntity(JsonOutput.toJson(body), ContentType.APPLICATION_JSON))
+            def body = ["name": name]
+            request.setEntity(new StringEntity(JsonOutput.toJson(body), ContentType.APPLICATION_JSON))
 
-        HttpResponse response = client.execute(request)
+            HttpResponse response = client.execute(request)
 
-        if (response.statusLine.statusCode != 201 && response.statusLine.statusCode != 409) {
-            throw new Exception("Failed to create distribution group")
-        } else if (response.statusLine.statusCode == 409) {
-            return loadDistributionGroup(name)
+            if (response.statusLine.statusCode != 201 && response.statusLine.statusCode != 409) {
+                throw new RetryableException("Failed to create distribution group")
+            } else if (response.statusLine.statusCode == 409) {
+                return loadDistributionGroup(name)
+            }
+
+            def jsonSlurper = new JsonSlurper()
+            return jsonSlurper.parseText(response.entity.content.text) as Map
         }
-
-        def jsonSlurper = new JsonSlurper()
-        jsonSlurper.parseText(response.entity.content.text) as Map
     }
 
     Map<String, String> loadDistributionGroup(String name) {
@@ -534,5 +539,19 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         HttpResponse response = client.execute(request)
         def jsonSlurper = new JsonSlurper()
         jsonSlurper.parseText(response.entity.content.text) as Map
+    }
+
+    <T> T retry(int maxRetries, long waitMs, Supplier<T> operation) {
+        try {
+            return operation.get()
+        } catch(RetryableException e) {
+            maxRetries--
+            if(maxRetries > 0) {
+                Thread.sleep(waitMs)
+                return (T) retry(maxRetries, waitMs, operation)
+            } else {
+                throw new Exception("Operation exceed maximum amount of retries", e.cause)
+            }
+        }
     }
 }

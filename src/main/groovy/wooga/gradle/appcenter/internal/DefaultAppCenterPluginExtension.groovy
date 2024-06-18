@@ -17,10 +17,29 @@
 package wooga.gradle.appcenter.internal
 
 import org.gradle.api.Project
+import org.gradle.api.artifacts.PublishArtifact
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import wooga.gradle.appcenter.AppCenterPluginExtension
 
 class DefaultAppCenterPluginExtension implements AppCenterPluginExtension {
 
-    DefaultAppCenterPluginExtension() {
+    private final Project project
+
+    final Property<? extends PublishArtifact> artifact = objects.property(PublishArtifact)
+
+    DefaultAppCenterPluginExtension(Project project) {
+        this.project = project
+    }
+
+
+    @Override
+    void artifact(Provider<PublishArtifact> artifact) {
+        this.artifact.set(artifact)
+    }
+
+    @Override
+    void artifact(PublishArtifact artifact) {
+        this.artifact.set(project.provider{ artifact })
     }
 }
