@@ -67,7 +67,7 @@ class AppCenterPlugin implements Plugin<Project> {
         extension.binary.convention(AppCenterConsts.binary.getFileValueProvider(project).orElse(artifactFile))
         extension.releaseNotes.convention(AppCenterConsts.releaseNotes.getStringValueProvider(project))
 
-        def metadataDir = project.layout.buildDirectory.dir("outputs/appcenter")
+        def metadataDir = project.layout.buildDirectory.dir("outputs/appCenter")
         def metadataFile = extension.owner
                 .zip(extension.applicationIdentifier) { owner, appId -> "upload_${owner}_${appId}.json"}
                 .zip(metadataDir) { fileName, dir -> dir.file(fileName) }

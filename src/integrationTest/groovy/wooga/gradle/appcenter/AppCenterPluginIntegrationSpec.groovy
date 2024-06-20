@@ -64,9 +64,10 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         }
 
         and: "the test value with replace placeholders"
-        if (testValue instanceof String) {
-            testValue = testValue.replaceAll("#projectDir#", escapedPath(projectDir.path))
+        if (testValue instanceof String && testValue.contains("#projectDir#")) {
+            testValue = new File(testValue.replaceAll("#projectDir#", escapedPath(projectDir.path))).path
         }
+
 
         when: ""
         def result = runTasksSuccessfully("custom")

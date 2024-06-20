@@ -62,7 +62,7 @@ class AppCenterReleaseUploader {
 
         UploadResult(Map release) {
             this.release = release
-            this.releaseID = release['release_Id']
+            this.releaseID = release['id']
             this.downloadUrl = release["download_url"].toString()
             this.installUrl = release["install_url"].toString()
         }

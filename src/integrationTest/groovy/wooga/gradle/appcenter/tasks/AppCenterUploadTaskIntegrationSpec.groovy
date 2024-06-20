@@ -38,8 +38,9 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
     static String apiToken = System.env["ATLAS_APP_CENTER_INTEGRATION_API_TOKEN"]
     static String owner = System.env["ATLAS_APP_CENTER_OWNER"]
     static String applicationIdentifierIos = System.env["ATLAS_APP_CENTER_INTEGRATION_APPLICATION_IDENTIFIER_IOS"]
+    static String applicationIdentifierDefault = applicationIdentifierIos
     static String applicationIdentifierAndroid = System.env["ATLAS_APP_CENTER_INTEGRATION_APPLICATION_IDENTIFIER_ANDROID"]
-    static String defaultVersionMetaPath = "build/outputs/appCenter/upload_${owner}_${applicationIdentifierIos}.json"
+    static String defaultVersionMetaPath = "build/outputs/appCenter/upload_${owner}_${applicationIdentifierDefault}.json"
 
     def setup() {
         buildFile << """
@@ -48,7 +49,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
             appCenter {
                 owner = "$owner"
                 apiToken = "$apiToken"
-                applicationIdentifier = "$applicationIdentifierIos"
+                applicationIdentifier = "$applicationIdentifierDefault"
             }
         """.stripIndent()
     }
@@ -143,6 +144,9 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
 
         then:
         defaultVersionMeta.exists()
+        and:
+        def versionMetadata = new JsonSlurper().parse(defaultVersionMeta)
+        versionMetadata['page_url'].toString().startsWith("https://install.appcenter.ms/orgs/${owner}/apps/${applicationIdentifierDefault}/releases")
     }
 
     def "writes json file with uploaded version meta data to custom path"() {
@@ -167,6 +171,9 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         then:
         !defaultVersionMeta.exists()
         customVersionMetadata.exists()
+        and:
+        def versionMetadata = new JsonSlurper().parse(customVersionMetadata)
+        versionMetadata['page_url'].toString().startsWith("https://install.appcenter.ms/orgs/${owner}/apps/${applicationIdentifierDefault}/releases")
     }
 
     def "publishes to Collaborators group when no groups are configured"() {
