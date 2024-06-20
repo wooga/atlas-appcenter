@@ -24,6 +24,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFile
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
@@ -36,20 +37,11 @@ import java.util.function.Supplier
 
 class AppCenterUploadTask extends DefaultTask implements AppCenterTaskSpec {
 
-    private final DirectoryProperty outputDir
-
-    @Internal
-    protected DirectoryProperty getOutputDir() {
-        outputDir
-    }
-
     @OutputFile
-    final Provider<RegularFile> uploadVersionMetaData
+    final RegularFileProperty uploadVersionMetaData = objects.fileProperty()
+
 
     AppCenterUploadTask() {
-        outputDir = project.objects.directoryProperty()
-        outputDir.set(temporaryDir)
-        uploadVersionMetaData = outputDir.file(owner.map({ owner -> "${owner}_${applicationIdentifier.get()}.json" }))
     }
 
     @TaskAction
