@@ -16,7 +16,6 @@
 
 package wooga.gradle.appcenter
 
-
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.PublishArtifact
@@ -65,9 +64,14 @@ class AppCenterPlugin implements Plugin<Project> {
                 return null
             }
         }
-        extension.binary.convention(artifactFile)
+        extension.binary.convention(AppCenterConsts.binary.getFileValueProvider(project).orElse(artifactFile))
         extension.releaseNotes.convention(AppCenterConsts.releaseNotes.getStringValueProvider(project))
 
+        def metadataDir = project.layout.buildDirectory.dir("outputs/appCenter")
+        def metadataFile = extension.owner
+                .zip(extension.applicationIdentifier) { owner, appId -> "upload_${owner}_${appId}.json"}
+                .zip(metadataDir) { fileName, dir -> dir.file(fileName) }
+        extension.uploadResultMetadata.convention(AppCenterConsts.uploadResultMetadata.getFileValueProvider(project).orElse(metadataFile))
         return extension
     }
 
@@ -91,6 +95,7 @@ class AppCenterPlugin implements Plugin<Project> {
             if(extension.artifact.present && !t.binary.present) {
                 dependsOn(extension.artifact.get().buildDependencies)
             }
+            t.uploadVersionMetaData.convention(extension.uploadResultMetadata)
         }
         project.afterEvaluate {
             if (extension.isPublishEnabled().get()) {

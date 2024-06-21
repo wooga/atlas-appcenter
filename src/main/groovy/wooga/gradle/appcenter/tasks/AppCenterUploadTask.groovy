@@ -24,6 +24,7 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFile
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
@@ -36,20 +37,11 @@ import java.util.function.Supplier
 
 class AppCenterUploadTask extends DefaultTask implements AppCenterTaskSpec {
 
-    private final DirectoryProperty outputDir
-
-    @Internal
-    protected DirectoryProperty getOutputDir() {
-        outputDir
-    }
-
     @OutputFile
-    final Provider<RegularFile> uploadVersionMetaData
+    final RegularFileProperty uploadVersionMetaData = objects.fileProperty()
+
 
     AppCenterUploadTask() {
-        outputDir = project.objects.directoryProperty()
-        outputDir.set(temporaryDir)
-        uploadVersionMetaData = outputDir.file(owner.map({ owner -> "${owner}_${applicationIdentifier.get()}.json" }))
     }
 
     @TaskAction
@@ -66,9 +58,11 @@ class AppCenterUploadTask extends DefaultTask implements AppCenterTaskSpec {
             .setServiceUnavailableRetryStrategy(new AppCenterRetryStrategy(retryCount.get(), retryTimeout.get().toInteger()))
             .build()
 
+        def owner = owner.get()
+        def appId = applicationIdentifier.get()
         AppCenterReleaseUploader uploader = new AppCenterReleaseUploader(client,
-            owner.get(),
-            applicationIdentifier.get(),
+            owner,
+            appId,
             apiToken.get())
 
         AppCenterReleaseUploader.DistributionSettings distributionSettings = uploader.distributionSettings
@@ -87,7 +81,10 @@ class AppCenterUploadTask extends DefaultTask implements AppCenterTaskSpec {
         logger.info("published to AppCenter release: ${result.releaseID}")
         logger.info("download_url: ${result.downloadUrl}")
         logger.info("install_url: ${result.installUrl}")
-        uploadVersionMetaData.get().asFile << JsonOutput.prettyPrint(JsonOutput.toJson(result.release))
+
+        def uploadVersionMetadataData = new HashMap(result.release)
+        uploadVersionMetadataData['page_url'] = "https://install.appcenter.ms/orgs/${owner}/apps/${appId}/releases/${result.releaseID}"
+        uploadVersionMetaData.get().asFile << JsonOutput.prettyPrint(JsonOutput.toJson(uploadVersionMetadataData))
     }
 
     <T> T retry(int maxRetries, long waitMs, Supplier<T> operation) {

@@ -23,6 +23,9 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputFile
 
 trait AppCenterPluginExtension implements AppCenterSpec {
 
@@ -52,6 +55,26 @@ trait AppCenterPluginExtension implements AppCenterSpec {
     void setBinary(File value) {
         binary.set(value)
     }
+
+
+    private final RegularFileProperty uploadResultMetadata = objects.fileProperty()
+
+    RegularFileProperty getUploadResultMetadata() {
+        return uploadResultMetadata
+    }
+
+    void setUploadResultMetadata(Provider<RegularFile> uploadResultMetadata) {
+        this.uploadResultMetadata.set(uploadResultMetadata)
+    }
+
+    void setUploadResultMetadata(RegularFile uploadResultMetadata) {
+        this.uploadResultMetadata.set(uploadResultMetadata)
+    }
+
+    void setUploadResultMetadata(File uploadResultMetadata) {
+        this.uploadResultMetadata.set(uploadResultMetadata)
+    }
+
 
     // TODO: Refactor, deprecate to use `destinations` instead?
     private final ListProperty<Map<String, String>> defaultDestinations = objects.listProperty(Map)

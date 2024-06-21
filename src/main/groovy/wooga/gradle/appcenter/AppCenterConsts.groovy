@@ -32,4 +32,5 @@ class AppCenterConsts {
     static PropertyLookup retryCount = new PropertyLookup("APP_CENTER_RETRY_COUNT", "appCenter.retryCount", 30)
     static PropertyLookup binary = new PropertyLookup("APP_CENTER_BINARY", "appCenter.binary", null)
     static PropertyLookup releaseNotes = new PropertyLookup("APP_CENTER_RELEASE_NOTES", "appCenter.releaseNotes", null)
+    static PropertyLookup uploadResultMetadata = new PropertyLookup("APP_CENTER_UPLOAD_RESULT_METADATA", "appCenter.uploadResultMetadata", null)
 }

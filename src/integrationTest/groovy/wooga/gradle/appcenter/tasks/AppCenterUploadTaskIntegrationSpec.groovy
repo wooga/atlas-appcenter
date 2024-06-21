@@ -38,16 +38,18 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
     static String apiToken = System.env["ATLAS_APP_CENTER_INTEGRATION_API_TOKEN"]
     static String owner = System.env["ATLAS_APP_CENTER_OWNER"]
     static String applicationIdentifierIos = System.env["ATLAS_APP_CENTER_INTEGRATION_APPLICATION_IDENTIFIER_IOS"]
+    static String applicationIdentifierDefault = applicationIdentifierIos
     static String applicationIdentifierAndroid = System.env["ATLAS_APP_CENTER_INTEGRATION_APPLICATION_IDENTIFIER_ANDROID"]
+    static String defaultVersionMetaPath = "build/outputs/appCenter/upload_${owner}_${applicationIdentifierDefault}.json"
 
     def setup() {
         buildFile << """
             version = "0.1.0"
             ${applyPlugin(AppCenterPlugin)}
-            publishAppCenter.configure { t ->
-                t.owner = "$owner"
-                t.apiToken = "$apiToken"
-                t.applicationIdentifier = "$applicationIdentifierIos"
+            appCenter {
+                owner = "$owner"
+                apiToken = "$apiToken"
+                applicationIdentifier = "$applicationIdentifierDefault"
             }
         """.stripIndent()
     }
@@ -134,14 +136,44 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
-        assert !versionMeta.exists()
+        def defaultVersionMeta = new File(projectDir, defaultVersionMetaPath)
+        assert !defaultVersionMeta.exists()
 
         when:
         runTasksSuccessfully("publishAppCenter")
 
         then:
-        versionMeta.exists()
+        defaultVersionMeta.exists()
+        and:
+        def versionMetadata = new JsonSlurper().parse(defaultVersionMeta)
+        versionMetadata['page_url'].toString().startsWith("https://install.appcenter.ms/orgs/${owner}/apps/${applicationIdentifierDefault}/releases")
+    }
+
+    def "writes json file with uploaded version meta data to custom path"() {
+        given: "a dummy ipa binary to upload"
+        def testFile = getClass().getClassLoader().getResource("test.ipa").path
+        def customVersionMetadata = new File(projectDir, "custom_result_metadata.json")
+        buildFile << """
+            appCenter {
+                binary = file("$testFile")
+                uploadResultMetadata = file(${wrapValueBasedOnType(customVersionMetadata, "File")})
+            }
+        """.stripIndent()
+
+        and: "a future version meta file"
+        def defaultVersionMeta = new File(projectDir, defaultVersionMetaPath)
+        assert !defaultVersionMeta.exists()
+        assert !customVersionMetadata.exists()
+
+        when:
+        runTasksSuccessfully("publishAppCenter")
+
+        then:
+        !defaultVersionMeta.exists()
+        customVersionMetadata.exists()
+        and:
+        def versionMetadata = new JsonSlurper().parse(customVersionMetadata)
+        versionMetadata['page_url'].toString().startsWith("https://install.appcenter.ms/orgs/${owner}/apps/${applicationIdentifierDefault}/releases")
     }
 
     def "publishes to Collaborators group when no groups are configured"() {
@@ -154,7 +186,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
+        def versionMeta = new File(projectDir, defaultVersionMetaPath)
         assert !versionMeta.exists()
 
         and: "no configured distribution groups"
@@ -188,7 +220,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
+        def versionMeta = new File(projectDir, defaultVersionMetaPath)
         assert !versionMeta.exists()
 
         when:
@@ -222,7 +254,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
+        def versionMeta = new File(projectDir, defaultVersionMetaPath)
         assert !versionMeta.exists()
 
         when:
@@ -275,7 +307,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
+        def versionMeta = new File(projectDir, defaultVersionMetaPath)
         assert !versionMeta.exists()
 
         when:
@@ -308,7 +340,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
+        def versionMeta = new File(projectDir, defaultVersionMetaPath)
         assert !versionMeta.exists()
 
         when:
@@ -346,7 +378,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
+        def versionMeta = new File(projectDir, defaultVersionMetaPath)
         assert !versionMeta.exists()
 
         when:
@@ -451,7 +483,7 @@ class AppCenterUploadTaskIntegrationSpec extends IntegrationSpec {
         """.stripIndent()
 
         and: "a future version meta file"
-        def versionMeta = new File(projectDir, "build/tmp/publishAppCenter/${owner}_${applicationIdentifierIos}.json")
+        def versionMeta = new File(projectDir, defaultVersionMetaPath)
         assert !versionMeta.exists()
 
         when:

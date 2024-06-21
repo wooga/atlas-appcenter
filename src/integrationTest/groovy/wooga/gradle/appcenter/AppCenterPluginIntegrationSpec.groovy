@@ -64,9 +64,10 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         }
 
         and: "the test value with replace placeholders"
-        if (testValue instanceof String) {
-            testValue = testValue.replaceAll("#projectDir#", escapedPath(projectDir.path))
+        if (testValue instanceof String && testValue.contains("#projectDir#")) {
+            testValue = new File(testValue.replaceAll("#projectDir#", escapedPath(projectDir.path))).path
         }
+
 
         when: ""
         def result = runTasksSuccessfully("custom")
@@ -85,6 +86,16 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         "owner"                 | "yyy"                        | _                                        | "yyy"             | PropertyLocation.property
         "owner"                 | "'zzz'"                      | "zzz"                                    | "zzz"             | PropertyLocation.script
         "owner"                 | null                         | _                                        | "null"            | PropertyLocation.none
+
+        "binary"                | "xxx"                        | "#projectDir#/build/xxx"                 | "xxx"             | PropertyLocation.env
+        "binary"                | "yyy"                        | "#projectDir#/build/yyy"                 | "yyy"             | PropertyLocation.property
+        "binary"                | "file('zzz')"                | "#projectDir#/zzz"                       | "zzz"             | PropertyLocation.script
+        "binary"                | null                         | _                                        | "null"            | PropertyLocation.none
+
+        "uploadResultMetadata"  | "xxx"                        | "#projectDir#/build/xxx"                 | "xxx"             | PropertyLocation.env
+        "uploadResultMetadata"  | "yyy"                        | "#projectDir#/build/yyy"                 | "yyy"             | PropertyLocation.property
+        "uploadResultMetadata"  | "file('zzz')"                | "#projectDir#/zzz"                       | "zzz"             | PropertyLocation.script
+        "uploadResultMetadata"  | null                         | _                                        | "null"            | PropertyLocation.none
 
         "applicationIdentifier" | "xxx"                        | _                                        | "xxx"             | PropertyLocation.env
         "applicationIdentifier" | "yyy"                        | _                                        | "yyy"             | PropertyLocation.property
@@ -165,13 +176,12 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         buildFile << "appCenter.${method}(${wrapValueBasedOnType(value, type)})"
 
 
-
         when:
         def result = runTasksSuccessfully("custom")
         and:
 
-        if(type.contains("File")) {
-          value = new File(value).path
+        if (type.contains("File")) {
+            value = new File(value).path
         }
 
         then:
@@ -190,6 +200,12 @@ class AppCenterPluginIntegrationSpec extends IntegrationSpec {
         "binary"                | "setBinary"                 | "#projectDir#/bin4"      | "File"
         "binary"                | "setBinary"                 | "#projectDir#/bin4"      | "RegularFile"
         "binary"                | "setBinary"                 | "#projectDir#/bin5"      | "Provider<RegularFile>"
+
+        "uploadResultMetadata"  | "uploadResultMetadata.set"  | "#projectDir#/bin2"      | "RegularFile"
+        "uploadResultMetadata"  | "uploadResultMetadata.set"  | "#projectDir#/bin3"      | "Provider<RegularFile>"
+        "uploadResultMetadata"  | "setUploadResultMetadata"   | "#projectDir#/bin4"      | "File"
+        "uploadResultMetadata"  | "setUploadResultMetadata"   | "#projectDir#/bin4"      | "RegularFile"
+        "uploadResultMetadata"  | "setUploadResultMetadata"   | "#projectDir#/bin5"      | "Provider<RegularFile>"
 
         "releaseNotes"          | "releaseNotes.set"          | "notes2"                 | "String"
         "releaseNotes"          | "releaseNotes.set"          | "notes3"                 | "Provider<String>"
