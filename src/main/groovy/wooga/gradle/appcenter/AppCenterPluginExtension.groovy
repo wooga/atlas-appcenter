@@ -23,12 +23,10 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.OutputFile
 
 trait AppCenterPluginExtension implements AppCenterSpec {
 
+    abstract void artifact(Object fileLike, Object dependency);
     abstract void artifact(Provider<PublishArtifact> artifact);
     abstract void artifact(PublishArtifact artifact);
 

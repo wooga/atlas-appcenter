@@ -32,6 +32,30 @@ class DefaultAppCenterPluginExtension implements AppCenterPluginExtension {
         this.project = project
     }
 
+    @Override
+    void artifact(Object fileLike, Object dependency) {
+        def proj = this.project
+        def apks = proj.configurations.create('appCenterBinaries')
+        Provider fileLikeProvider
+        if(fileLike instanceof Provider) {
+            fileLikeProvider = fileLike
+        } else {
+            fileLikeProvider = project.provider { fileLike }
+        }
+
+        def artifact = fileLikeProvider.map { file ->
+            def artifactsSet = apks.artifacts
+            if (artifactsSet.size() > 0) {
+                return artifactsSet.first()
+            } else {
+                return proj.artifacts.add(apks.name, file) {
+                    type 'appCenterArtifact'
+                    builtBy dependency
+                }
+            }
+        } as Provider<PublishArtifact>
+        this.artifact(artifact)
+    }
 
     @Override
     void artifact(Provider<PublishArtifact> artifact) {
