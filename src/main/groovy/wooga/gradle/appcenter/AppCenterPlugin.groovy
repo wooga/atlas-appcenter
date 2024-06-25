@@ -54,17 +54,7 @@ class AppCenterPlugin implements Plugin<Project> {
         extension.publishEnabled.convention(AppCenterConsts.publishEnabled.getBooleanValueProvider(project))
         extension.retryTimeout.convention(AppCenterConsts.retryTimeout.getValueProvider(project, {Long.parseLong(it)}))
         extension.retryCount.convention(AppCenterConsts.retryCount.getIntegerValueProvider(project))
-
-        def artifactFile = extension.artifact.map { PublishArtifact it ->
-            try {
-                return project.layout.projectDirectory.file(it.file.absolutePath)
-                //if the backing of artifact.file is a provider it just tries to resolve it, and
-                // if there is nothing yet in the provider, it throws
-            } catch (MissingValueException _) {
-                return null
-            }
-        }
-        extension.binary.convention(AppCenterConsts.binary.getFileValueProvider(project).orElse(artifactFile))
+        extension.binary.convention(AppCenterConsts.binary.getFileValueProvider(project))
         extension.releaseNotes.convention(AppCenterConsts.releaseNotes.getStringValueProvider(project))
 
         def metadataDir = project.layout.buildDirectory.dir("outputs/appCenter")
@@ -93,7 +83,13 @@ class AppCenterPlugin implements Plugin<Project> {
             t.retryTimeout.convention(extension.retryTimeout)
             t.binary.convention(extension.binary)
             if(extension.artifact.present && !t.binary.present) {
-                dependsOn(extension.artifact.get().buildDependencies)
+                def artifactFile = extension.artifact.map { PublishArtifact it ->
+                    try {
+                        return project.layout.projectDirectory.file(it.file.absolutePath)
+                    } catch (MissingValueException ignore) { return null }
+                }
+                t.binary.convention(extension.binary.orElse(artifactFile))
+                dependsOn(extension.artifact.map{ it.buildDependencies })
             }
             t.uploadVersionMetaData.convention(extension.uploadResultMetadata)
         }
