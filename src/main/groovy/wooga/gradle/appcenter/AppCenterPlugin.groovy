@@ -82,6 +82,7 @@ class AppCenterPlugin implements Plugin<Project> {
             t.retryCount.convention(extension.retryCount)
             t.retryTimeout.convention(extension.retryTimeout)
             t.binary.convention(extension.binary)
+            t.releaseNotes.convention(extension.releaseNotes)
             if(extension.artifact.present && !t.binary.present) {
                 def artifactFile = extension.artifact.map { PublishArtifact it ->
                     try {
